@@ -29,9 +29,20 @@ export function OpportunityCard({ item }: Props) {
       </div>
 
       {/* Headline */}
-      <p className="text-sm text-zinc-300 font-medium mb-2 line-clamp-2 leading-snug">
-        {item.event.headline}
-      </p>
+      {item.event.articleUrl ? (
+        <a
+          href={item.event.articleUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block text-sm text-zinc-300 font-medium mb-2 line-clamp-2 leading-snug hover:text-zinc-100 hover:underline transition-colors"
+        >
+          {item.event.headline}
+        </a>
+      ) : (
+        <p className="text-sm text-zinc-300 font-medium mb-2 line-clamp-2 leading-snug">
+          {item.event.headline}
+        </p>
+      )}
 
       {/* Bear thesis */}
       <p className="text-sm text-zinc-400 mb-3 line-clamp-3 leading-relaxed">
@@ -40,17 +51,19 @@ export function OpportunityCard({ item }: Props) {
 
       {/* Tickers */}
       <div className="flex items-center gap-2 flex-wrap">
-        {item.affectedTickers.slice(0, 6).map((ticker) => (
-          <Link
-            key={ticker}
-            href={`/ticker/${ticker}`}
-            className="text-xs font-mono bg-zinc-800 hover:bg-zinc-700 text-zinc-300 px-2 py-0.5 rounded border border-zinc-700 transition-colors"
-          >
-            {ticker}
-          </Link>
+        {item.affectedTickers.slice(0, 6).map((ticker, i) => (
+          <span key={ticker} className="flex items-center gap-2">
+            {i > 0 && <span className="text-zinc-700">·</span>}
+            <Link
+              href={`/ticker/${ticker}`}
+              className="text-xs font-mono bg-zinc-800 hover:bg-zinc-700 text-zinc-300 px-2 py-0.5 rounded border border-zinc-700 transition-colors"
+            >
+              {ticker}
+            </Link>
+          </span>
         ))}
         {item.affectedTickers.length > 6 && (
-          <span className="text-xs text-zinc-600">
+          <span className="text-xs text-zinc-600 ml-1">
             +{item.affectedTickers.length - 6} more
           </span>
         )}

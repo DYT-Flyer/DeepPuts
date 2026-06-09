@@ -50,6 +50,7 @@ export async function GET(req: NextRequest) {
       publishedAt: a.rawEvent.publishedAt.toISOString(),
       assetClass: a.rawEvent.assetClass as "stock" | "crypto",
       source: a.rawEvent.source,
+      articleUrl: (JSON.parse(a.rawEvent.rawJson) as { article_url?: string }).article_url ?? null,
     },
   }));
 

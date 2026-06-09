@@ -35,6 +35,7 @@ export interface OpportunityItem {
     publishedAt: string;
     assetClass: AssetClass;
     source: string;
+    articleUrl: string | null;
   };
 }
 
@@ -45,6 +46,7 @@ export interface EventFeedItem {
   publishedAt: string;
   assetClass: AssetClass;
   tickers: string[];
+  articleUrl: string | null;
   analysis: {
     convictionScore: number;
     signalType: SignalType;

@@ -29,20 +29,33 @@ export function EventFeedRow({ item }: Props) {
 
       {/* Content */}
       <div className="flex-1 min-w-0">
-        <p className="text-sm text-zinc-200 leading-snug line-clamp-2 mb-1.5">
-          {item.headline}
-        </p>
-        <div className="flex items-center gap-2 flex-wrap">
+        {item.articleUrl ? (
+          <a
+            href={item.articleUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block text-sm text-zinc-200 leading-snug line-clamp-2 mb-1.5 hover:text-zinc-100 hover:underline transition-colors"
+          >
+            {item.headline}
+          </a>
+        ) : (
+          <p className="text-sm text-zinc-200 leading-snug line-clamp-2 mb-1.5">
+            {item.headline}
+          </p>
+        )}
+        <div className="flex items-center gap-2 flex-wrap mt-0.5">
           {item.analysis && <SignalBadge type={item.analysis.signalType} size="sm" />}
           <span className="text-xs text-zinc-600 capitalize">{item.assetClass}</span>
-          {item.tickers.slice(0, 4).map((t) => (
-            <Link
-              key={t}
-              href={`/ticker/${t.replace("X:", "").replace("USD", "")}`}
-              className="text-xs font-mono text-zinc-500 hover:text-zinc-300 transition-colors"
-            >
-              {t}
-            </Link>
+          {item.tickers.slice(0, 4).map((t, i) => (
+            <span key={t} className="flex items-center gap-2">
+              <span className="text-zinc-700">·</span>
+              <Link
+                href={`/ticker/${t.replace("X:", "").replace("USD", "")}`}
+                className="text-xs font-mono text-zinc-500 hover:text-zinc-300 transition-colors"
+              >
+                {t}
+              </Link>
+            </span>
           ))}
         </div>
       </div>

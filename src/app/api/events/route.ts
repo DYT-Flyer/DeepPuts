@@ -29,6 +29,7 @@ export async function GET(req: NextRequest) {
     publishedAt: e.publishedAt.toISOString(),
     assetClass: e.assetClass as "stock" | "crypto",
     tickers: JSON.parse(e.tickers) as string[],
+    articleUrl: (JSON.parse(e.rawJson) as { article_url?: string }).article_url ?? null,
     analysis: e.analysis
       ? {
           convictionScore: e.analysis.convictionScore,

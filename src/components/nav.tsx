@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
+import { Home } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface Props {
@@ -22,7 +23,19 @@ export function Nav({ userEmail }: Props) {
 
         {/* Links */}
         <div className="flex items-center gap-4">
-          <NavLink href="/" active={pathname === "/"}>
+          <Link
+            href="/"
+            className={cn(
+              "flex items-center justify-center w-7 h-7 rounded transition-colors",
+              pathname === "/"
+                ? "bg-zinc-800 text-zinc-100"
+                : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/50"
+            )}
+            title="Home"
+          >
+            <Home size={14} />
+          </Link>
+          <NavLink href="/opportunities" active={pathname === "/opportunities"}>
             Opportunities
           </NavLink>
           <NavLink href="/events" active={pathname === "/events"}>
