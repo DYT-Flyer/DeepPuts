@@ -1,0 +1,44 @@
+{
+  "name": "deepputs",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "scheduler": "tsx scheduler.ts",
+    "db:migrate": "prisma migrate dev",
+    "db:studio": "prisma studio",
+    "db:seed": "tsx prisma/seed.ts",
+    "db:reset": "prisma migrate reset"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.102.0",
+    "@auth/prisma-adapter": "^2.8.0",
+    "@prisma/client": "^6.0.0",
+    "bcryptjs": "^2.4.3",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "dotenv": "^17.4.2",
+    "lucide-react": "^1.17.0",
+    "next": "15.1.0",
+    "next-auth": "^5.0.0-beta.25",
+    "node-cron": "^3.0.3",
+    "p-limit": "^6.2.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "recharts": "^2.13.0",
+    "tailwind-merge": "^3.6.0",
+    "tailwindcss-animate": "^1.0.7"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/node": "^20",
+    "@types/node-cron": "^3.0.11",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "prisma": "^6.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5"
+  }
+}

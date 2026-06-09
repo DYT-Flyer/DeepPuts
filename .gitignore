@@ -1,0 +1,7 @@
+.next/
+node_modules/
+.env.local
+prisma/*.db
+prisma/*.db-journal
+prisma/*.db-shm
+prisma/*.db-wal

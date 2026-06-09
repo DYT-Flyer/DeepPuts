@@ -1,0 +1,108 @@
+import { getPolygonClient } from "./client";
+import type { SparklinePoint } from "@/types";
+
+interface AggResult {
+  t: number;
+  o: number;
+  h: number;
+  l: number;
+  c: number;
+  v: number;
+  vw: number;
+}
+
+interface AggsResponse {
+  results?: AggResult[];
+  resultsCount?: number;
+  status: string;
+  ticker: string;
+}
+
+const ANOMALY_WATCHLIST = [
+  "AAPL", "MSFT", "NVDA", "TSLA", "AMZN", "META", "GOOGL", "AMD",
+  "NFLX", "PYPL", "SNAP", "RIVN", "COIN", "MSTR", "GME", "PLTR",
+];
+
+const CRYPTO_ANOMALY_WATCHLIST = ["X:BTCUSD", "X:ETHUSD", "X:SOLUSD", "X:DOGEUSD"];
+
+export interface PriceAnomaly {
+  symbol: string;
+  assetClass: "stock" | "crypto";
+  date: string;
+  pctChange: number;
+  volumeMultiple: number;
+  currentPrice: number;
+}
+
+function toDateStr(d: Date) {
+  return d.toISOString().split("T")[0];
+}
+
+export async function detectAnomalies(): Promise<PriceAnomaly[]> {
+  const client = getPolygonClient();
+  const anomalies: PriceAnomaly[] = [];
+  const now = new Date();
+  const from = new Date(now);
+  from.setDate(from.getDate() - 35);
+
+  const allSymbols: Array<{ symbol: string; assetClass: "stock" | "crypto" }> = [
+    ...ANOMALY_WATCHLIST.map((s) => ({ symbol: s, assetClass: "stock" as const })),
+    ...CRYPTO_ANOMALY_WATCHLIST.map((s) => ({ symbol: s, assetClass: "crypto" as const })),
+  ];
+
+  for (const { symbol, assetClass } of allSymbols) {
+    try {
+      const data = await client.get<AggsResponse>(
+        `/v2/aggs/ticker/${encodeURIComponent(symbol)}/range/1/day/${toDateStr(from)}/${toDateStr(now)}`,
+        { adjusted: "true", sort: "asc", limit: "50" }
+      );
+
+      if (!data.results || data.results.length < 2) continue;
+
+      const recent = data.results.slice(-2);
+      const prev = recent[0];
+      const curr = recent[1];
+      const pctChange = ((curr.c - prev.c) / prev.c) * 100;
+
+      // Calculate 30-day average volume
+      const last30 = data.results.slice(-31, -1);
+      const avgVolume = last30.reduce((sum, d) => sum + d.v, 0) / (last30.length || 1);
+      const volumeMultiple = curr.v / avgVolume;
+
+      // Flag: >5% drop OR volume spike >2x with any drop
+      if (pctChange < -5 || (volumeMultiple > 2 && pctChange < -2)) {
+        anomalies.push({
+          symbol: symbol.replace("X:", "").replace("USD", "/USD"),
+          assetClass,
+          date: new Date(curr.t).toISOString(),
+          pctChange,
+          volumeMultiple,
+          currentPrice: curr.c,
+        });
+      }
+    } catch (err) {
+      console.error(`Anomaly check failed for ${symbol}:`, err);
+    }
+  }
+
+  return anomalies;
+}
+
+export async function fetchSparkline(symbol: string, days = 30): Promise<SparklinePoint[]> {
+  const client = getPolygonClient();
+  const now = new Date();
+  const from = new Date(now);
+  from.setDate(from.getDate() - days);
+
+  // For crypto symbols like BTC, convert to Polygon format
+  const polygonSymbol = symbol.includes("/")
+    ? `X:${symbol.replace("/", "")}`
+    : symbol;
+
+  const data = await client.get<AggsResponse>(
+    `/v2/aggs/ticker/${encodeURIComponent(polygonSymbol)}/range/1/hour/${toDateStr(from)}/${toDateStr(now)}`,
+    { adjusted: "true", sort: "asc", limit: "720" }
+  );
+
+  return (data.results || []).map((r) => ({ t: r.t, c: r.c }));
+}

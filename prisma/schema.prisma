@@ -1,0 +1,80 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  passwordHash String
+  name         String?
+  createdAt    DateTime  @default(now())
+  sessions     Session[]
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expires      DateTime
+  sessionToken String   @unique
+}
+
+model RawEvent {
+  id          String    @id @default(cuid())
+  source      String    // "polygon_news" | "polygon_anomaly"
+  assetClass  String    // "stock" | "crypto"
+  externalId  String    @unique
+  tickers     String    // JSON array of strings
+  headline    String
+  summary     String?
+  publishedAt DateTime
+  rawJson     String
+  fetchedAt   DateTime  @default(now())
+  analysis    Analysis?
+
+  @@index([publishedAt])
+  @@index([assetClass])
+}
+
+model Analysis {
+  id              String    @id @default(cuid())
+  rawEventId      String    @unique
+  rawEvent        RawEvent  @relation(fields: [rawEventId], references: [id], onDelete: Cascade)
+  bearThesis      String
+  convictionScore Int       // 1-10
+  signalType      String    // "earnings_miss" | "sec_filing" | "news_negative" | "macro" | "crypto_dump" | "insider_sell" | "guidance_cut" | "regulatory"
+  affectedTickers String    // JSON array
+  sector          String?
+  catalystDate    DateTime?
+  analysisJson    String
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([convictionScore])
+  @@index([signalType])
+  @@index([createdAt])
+}
+
+model TickerCache {
+  symbol        String    @id
+  name          String?
+  sector        String?
+  assetClass    String    // "stock" | "crypto"
+  lastPrice     Float?
+  priceUpdatedAt DateTime?
+}
+
+model SchedulerRun {
+  id              String    @id @default(cuid())
+  startedAt       DateTime  @default(now())
+  finishedAt      DateTime?
+  status          String    // "running" | "success" | "partial" | "error"
+  eventsFound     Int       @default(0)
+  eventsAnalyzed  Int       @default(0)
+  errorMessage    String?
+}
