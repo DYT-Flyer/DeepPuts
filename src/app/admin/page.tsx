@@ -1,0 +1,335 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { Nav } from "@/components/nav";
+import { RefreshCw, Play, Eye, Flag, Trash2, CheckCircle } from "lucide-react";
+
+interface SchedulerRun {
+  id: string;
+  status: string;
+  startedAt: string;
+  finishedAt: string | null;
+  eventsFound: number;
+  eventsAnalyzed: number;
+  errorMessage: string | null;
+  durationSec: number | null;
+  claudeCost: number | null;
+}
+
+interface AdminData {
+  runs: SchedulerRun[];
+  stats: { totalEvents: number; totalAnalyzed: number; pendingAnalysis: number };
+}
+
+interface ModerationFlag {
+  id: string;
+  reason: string;
+  createdAt: string;
+  reporter: { name: string; email: string };
+  comment: {
+    id: string;
+    content: string;
+    analysisId: string;
+    analysisSummary: string;
+    author: { name: string; email: string };
+  } | null;
+}
+
+const STATUS_DOT: Record<string, string> = {
+  success: "#22c55e", partial: "#f59e0b", error: "#f43f5e", running: "#3b82f6",
+};
+
+export default function AdminPage() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+  const [data, setData] = useState<AdminData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [triggering, setTriggering] = useState<"full" | "dry" | null>(null);
+  const [triggerMsg, setTriggerMsg] = useState("");
+  const [activeTab, setActiveTab] = useState<"scheduler" | "moderation">("scheduler");
+  const [flags, setFlags] = useState<ModerationFlag[]>([]);
+  const [flagsLoading, setFlagsLoading] = useState(false);
+
+  useEffect(() => {
+    if (status === "unauthenticated") router.replace("/login");
+  }, [status, router]);
+
+  async function load() {
+    setLoading(true);
+    const res = await fetch("/api/admin/scheduler");
+    if (res.ok) setData(await res.json());
+    setLoading(false);
+  }
+
+  async function loadFlags() {
+    setFlagsLoading(true);
+    const res = await fetch("/api/admin/moderation");
+    if (res.ok) setFlags(await res.json());
+    setFlagsLoading(false);
+  }
+
+  useEffect(() => { load(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (activeTab === "moderation") loadFlags();
+  }, [activeTab]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  async function moderateAction(action: "dismiss" | "delete_comment", flagId: string, commentId?: string) {
+    await fetch("/api/admin/moderation", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action, flagId, commentId }),
+    });
+    setFlags(prev => prev.filter(f => f.id !== flagId));
+  }
+
+  async function triggerRun(dryRun: boolean) {
+    setTriggering(dryRun ? "dry" : "full");
+    setTriggerMsg("");
+    const res = await fetch("/api/admin/scheduler", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ dryRun }),
+    });
+    if (res.ok) {
+      setTriggerMsg(dryRun ? "Dry run triggered." : "Full run triggered — refreshing in 5s…");
+      if (!dryRun) setTimeout(() => load(), 5000);
+    } else {
+      setTriggerMsg("Failed to trigger run.");
+    }
+    setTriggering(null);
+  }
+
+  if (status === "loading" || status === "unauthenticated") return null;
+
+  return (
+    <div className="min-h-screen" style={{ background: "var(--bg)" }}>
+      <Nav userEmail={session?.user?.email} userName={session?.user?.name} />
+
+      <main className="max-w-5xl mx-auto px-6 py-8">
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-xl font-semibold" style={{ color: "var(--text)" }}>Admin</h1>
+            <p className="text-xs mt-0.5" style={{ color: "var(--text-3)" }}>Scheduler controls and system health</p>
+          </div>
+          <button onClick={load} disabled={loading}
+            className="flex items-center gap-2 text-sm px-3 py-1.5 rounded-lg transition-all"
+            style={{ background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text-3)", cursor: loading ? "not-allowed" : "pointer" }}
+          >
+            <RefreshCw size={12} className={loading ? "animate-spin" : ""} />
+            Refresh
+          </button>
+        </div>
+
+        {/* Tabs */}
+        <div className="flex items-center gap-1 mb-8">
+          {(["scheduler", "moderation"] as const).map(t => (
+            <button key={t} onClick={() => setActiveTab(t)}
+              className="text-xs px-4 py-1.5 rounded-lg capitalize transition-all"
+              style={{
+                background: activeTab === t ? "rgba(255,255,255,0.08)" : "transparent",
+                color: activeTab === t ? "var(--text)" : "var(--text-3)",
+                border: `1px solid ${activeTab === t ? "var(--border-hover)" : "transparent"}`,
+              }}
+            >
+              {t}
+              {t === "moderation" && flags.length > 0 && (
+                <span className="ml-1.5 text-xs px-1.5 py-0.5 rounded-full font-mono"
+                  style={{ background: "rgba(244,63,94,0.2)", color: "#f43f5e" }}>
+                  {flags.length}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+
+        {activeTab === "moderation" ? (
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--text-3)" }}>
+                Flagged Comments
+              </h2>
+              <button onClick={loadFlags} className="text-xs flex items-center gap-1.5 transition-colors"
+                style={{ color: "var(--text-3)", background: "none", border: "none", cursor: "pointer" }}
+              >
+                <RefreshCw size={11} className={flagsLoading ? "animate-spin" : ""} /> Refresh
+              </button>
+            </div>
+
+            {flagsLoading ? (
+              <div className="space-y-3">
+                {[1,2,3].map(i => <div key={i} className="h-20 rounded-xl animate-pulse" style={{ background: "var(--surface)" }} />)}
+              </div>
+            ) : flags.length === 0 ? (
+              <div className="rounded-xl py-16 text-center" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+                <CheckCircle size={24} style={{ color: "#22c55e", margin: "0 auto 12px" }} />
+                <p className="text-sm" style={{ color: "var(--text-3)" }}>No pending flags</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {flags.map(f => (
+                  <div key={f.id} className="rounded-xl p-4" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+                    <div className="flex items-start justify-between gap-4 mb-3">
+                      <div className="flex items-center gap-2">
+                        <Flag size={12} style={{ color: "#f59e0b", flexShrink: 0 }} />
+                        <span className="text-xs font-medium capitalize" style={{ color: "#f59e0b" }}>{f.reason}</span>
+                        <span className="text-xs" style={{ color: "var(--text-3)" }}>·</span>
+                        <span className="text-xs" style={{ color: "var(--text-3)" }}>
+                          by {f.reporter.name} · {new Date(f.createdAt).toLocaleDateString()}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button onClick={() => moderateAction("dismiss", f.id)}
+                          className="text-xs px-2.5 py-1 rounded-lg transition-all"
+                          style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--text-3)", cursor: "pointer" }}
+                          onMouseEnter={e => (e.currentTarget.style.color = "#22c55e")}
+                          onMouseLeave={e => (e.currentTarget.style.color = "var(--text-3)")}
+                          title="Dismiss (keep comment)"
+                        >Dismiss</button>
+                        {f.comment && (
+                          <button onClick={() => moderateAction("delete_comment", f.id, f.comment!.id)}
+                            className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg transition-all"
+                            style={{ background: "rgba(244,63,94,0.08)", border: "1px solid rgba(244,63,94,0.2)", color: "#f43f5e", cursor: "pointer" }}
+                          >
+                            <Trash2 size={10} /> Delete
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                    {f.comment && (
+                      <>
+                        <p className="text-xs mb-2 px-3 py-2 rounded-lg italic" style={{ background: "rgba(255,255,255,0.03)", color: "var(--text-2)", border: "1px solid var(--border)" }}>
+                          &ldquo;{f.comment.content}&rdquo;
+                        </p>
+                        <div className="flex items-center gap-2 text-xs" style={{ color: "var(--text-3)" }}>
+                          <span>by {f.comment.author.name}</span>
+                          <span>·</span>
+                          <Link href={`/opportunity/${f.comment.analysisId}`} target="_blank"
+                            className="transition-colors" style={{ color: "#555" }}
+                            onMouseEnter={e => (e.currentTarget.style.color = "#aaa")}
+                            onMouseLeave={e => (e.currentTarget.style.color = "#555")}
+                          >
+                            {f.comment.analysisSummary}
+                          </Link>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        ) : (
+          <>
+        <div className="grid grid-cols-3 gap-4 mb-8">
+          {[
+            { label: "Total Events",    value: data?.stats.totalEvents    ?? "—" },
+            { label: "Analyzed",        value: data?.stats.totalAnalyzed  ?? "—" },
+            { label: "Pending Analysis",value: data?.stats.pendingAnalysis ?? "—", highlight: true },
+          ].map(s => (
+            <div key={s.label} className="rounded-xl p-4"
+              style={{ background: s.highlight ? "rgba(244,63,94,0.05)" : "var(--surface)", border: `1px solid ${s.highlight ? "rgba(244,63,94,0.2)" : "var(--border)"}` }}
+            >
+              <p className="text-xs" style={{ color: "var(--text-3)" }}>{s.label}</p>
+              <p className="text-2xl font-bold font-mono mt-1" style={{ color: s.highlight ? "#f43f5e" : "var(--text)" }}>{s.value}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* Trigger */}
+        <div className="rounded-xl p-5 mb-6" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+          <h2 className="text-xs font-semibold uppercase tracking-widest mb-4" style={{ color: "var(--text-3)" }}>Scheduler Controls</h2>
+          <div className="flex items-center gap-3">
+            <button onClick={() => triggerRun(false)} disabled={triggering !== null}
+              className="flex items-center gap-2 text-sm px-4 py-2 rounded-lg font-medium transition-all"
+              style={{
+                background: triggering ? "rgba(244,63,94,0.2)" : "#f43f5e",
+                color: triggering ? "rgba(255,255,255,0.4)" : "#fff",
+                border: "none", cursor: triggering ? "not-allowed" : "pointer",
+              }}
+            >
+              <Play size={12} />
+              {triggering === "full" ? "Triggering…" : "Run Full Ingest"}
+            </button>
+            <button onClick={() => triggerRun(true)} disabled={triggering !== null}
+              className="flex items-center gap-2 text-sm px-4 py-2 rounded-lg transition-all"
+              style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--text-2)", cursor: triggering ? "not-allowed" : "pointer" }}
+              onMouseEnter={e => { if (!triggering) e.currentTarget.style.borderColor = "var(--border-hover)"; }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--border)"; }}
+            >
+              <Eye size={12} />
+              {triggering === "dry" ? "Running…" : "Dry Run"}
+            </button>
+            {triggerMsg && (
+              <p className="text-xs" style={{ color: "var(--text-3)" }}>{triggerMsg}</p>
+            )}
+          </div>
+          <p className="text-xs mt-3" style={{ color: "var(--text-3)" }}>
+            Full run fetches events from Polygon.io and runs Claude on unanalyzed events.
+            Dry run simulates without writing to the database.
+          </p>
+        </div>
+
+        {/* Run history */}
+        <div className="rounded-xl overflow-hidden" style={{ border: "1px solid var(--border)" }}>
+          <div className="px-5 py-3" style={{ borderBottom: "1px solid var(--border)", background: "var(--surface)" }}>
+            <h2 className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--text-3)" }}>Run History</h2>
+          </div>
+          {loading ? (
+            <div className="p-5 space-y-3">
+              {[1,2,3].map(i => <div key={i} className="h-8 rounded animate-pulse" style={{ background: "var(--surface)" }} />)}
+            </div>
+          ) : !data?.runs.length ? (
+            <div className="p-8 text-center">
+              <p className="text-sm" style={{ color: "var(--text-3)" }}>No runs yet</p>
+            </div>
+          ) : (
+            <table className="w-full text-xs">
+              <thead>
+                <tr style={{ borderBottom: "1px solid var(--border)" }}>
+                  {["Status", "Started", "Duration", "Found", "Analyzed", "Cost", "Error"].map(h => (
+                    <th key={h} className="px-4 py-2.5 text-left font-medium" style={{ color: "var(--text-3)" }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {data.runs.map((run, i) => (
+                  <tr key={run.id} style={{ borderBottom: i < data.runs.length - 1 ? "1px solid var(--border)" : "none" }}
+                    onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,0.02)")}
+                    onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+                  >
+                    <td className="px-4 py-3">
+                      <span className="flex items-center gap-1.5 capitalize font-medium" style={{ color: STATUS_DOT[run.status] ?? "var(--text-2)" }}>
+                        <span style={{ width: 6, height: 6, borderRadius: "50%", background: STATUS_DOT[run.status] ?? "#555", display: "inline-block" }} />
+                        {run.status}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 font-mono" style={{ color: "var(--text-2)" }}>
+                      {new Date(run.startedAt).toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                    </td>
+                    <td className="px-4 py-3 font-mono" style={{ color: "var(--text-3)" }}>
+                      {run.durationSec !== null ? `${run.durationSec}s` : run.status === "running" ? "running…" : "—"}
+                    </td>
+                    <td className="px-4 py-3 font-mono" style={{ color: "var(--text-2)" }}>{run.eventsFound}</td>
+                    <td className="px-4 py-3 font-mono" style={{ color: "var(--text-2)" }}>{run.eventsAnalyzed}</td>
+                    <td className="px-4 py-3 font-mono text-xs" style={{ color: "var(--text-3)" }}>
+                      {run.claudeCost !== null ? `$${run.claudeCost.toFixed(4)}` : "—"}
+                    </td>
+                    <td className="px-4 py-3 max-w-xs truncate" style={{ color: "#f87171" }}>
+                      {run.errorMessage ?? ""}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+          </>
+        )}
+      </main>
+    </div>
+  );
+}

@@ -88,6 +88,42 @@ export async function detectAnomalies(): Promise<PriceAnomaly[]> {
   return anomalies;
 }
 
+export async function fetchPriceAt(symbol: string, date: Date): Promise<number | null> {
+  const client = getPolygonClient();
+  const polygonSymbol = symbol.includes("/") ? `X:${symbol.replace("/", "")}` : symbol;
+  const from = new Date(date);
+  const to = new Date(date);
+  to.setDate(to.getDate() + 7); // look forward up to a week to skip weekends/holidays
+
+  try {
+    const data = await client.get<AggsResponse>(
+      `/v2/aggs/ticker/${encodeURIComponent(polygonSymbol)}/range/1/day/${toDateStr(from)}/${toDateStr(to)}`,
+      { adjusted: "true", sort: "asc", limit: "5" }
+    );
+    return data.results?.[0]?.c ?? null;
+  } catch {
+    return null;
+  }
+}
+
+export async function fetchCurrentPrice(symbol: string): Promise<number | null> {
+  const client = getPolygonClient();
+  const polygonSymbol = symbol.includes("/") ? `X:${symbol.replace("/", "")}` : symbol;
+  const now = new Date();
+  const from = new Date(now);
+  from.setDate(from.getDate() - 7);
+
+  try {
+    const data = await client.get<AggsResponse>(
+      `/v2/aggs/ticker/${encodeURIComponent(polygonSymbol)}/range/1/day/${toDateStr(from)}/${toDateStr(now)}`,
+      { adjusted: "true", sort: "desc", limit: "1" }
+    );
+    return data.results?.[0]?.c ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export async function fetchSparkline(symbol: string, days = 30): Promise<SparklinePoint[]> {
   const client = getPolygonClient();
   const now = new Date();

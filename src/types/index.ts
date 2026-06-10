@@ -17,6 +17,14 @@ export interface AnalysisResult {
   affectedTickers: string[];
   sector: string | null;
   catalystDate: string | null;
+  // v2 fields — optional so old analyses stay compatible
+  keyRisks?: string[];
+  counterArgs?: string[];
+  confidenceLabel?: "high" | "medium" | "low" | "speculative";
+  timeHorizon?: "1-7d" | "1-4w" | "1-3m" | "3m+";
+  severity?: "low" | "medium" | "high" | "critical";
+  sourceQuality?: "primary" | "secondary" | "aggregated";
+  industry?: string | null;
 }
 
 export interface OpportunityItem {
@@ -28,6 +36,9 @@ export interface OpportunityItem {
   sector: string | null;
   catalystDate: string | null;
   createdAt: string;
+  commentCount: number;
+  voteScore: number;
+  userVote: 1 | -1 | 0;
   event: {
     id: string;
     headline: string;
@@ -48,10 +59,13 @@ export interface EventFeedItem {
   tickers: string[];
   articleUrl: string | null;
   analysis: {
+    id: string;
     convictionScore: number;
     signalType: SignalType;
     bearThesis: string;
     affectedTickers: string[];
+    voteScore: number;
+    userVote: 1 | -1 | 0;
   } | null;
 }
 

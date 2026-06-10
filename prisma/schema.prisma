@@ -7,13 +7,27 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ─── Users & Auth ────────────────────────────────────────────────────────────
+
 model User {
-  id           String    @id @default(cuid())
-  email        String    @unique
-  passwordHash String
-  name         String?
-  createdAt    DateTime  @default(now())
-  sessions     Session[]
+  id              String    @id @default(cuid())
+  email           String    @unique
+  passwordHash    String
+  name            String?
+  role            String    @default("user") // "user" | "admin" | "analyst"
+  onboardedAt     DateTime?
+  acceptedTermsAt DateTime?
+  createdAt       DateTime  @default(now())
+
+  sessions        Session[]
+  comments        Comment[]
+  votes           Vote[]
+  watchlist       Watchlist[]
+  watchlistNotes  WatchlistNote[]
+  savedFilters    SavedFilter[]
+  notifPrefs      NotificationPreference?
+  reputation      UserReputation?
+  flagsFiled      ModerationFlag[] @relation("flags_filed")
 }
 
 model Session {
@@ -23,6 +37,8 @@ model Session {
   expires      DateTime
   sessionToken String   @unique
 }
+
+// ─── Market Events ───────────────────────────────────────────────────────────
 
 model RawEvent {
   id          String    @id @default(cuid())
@@ -41,40 +57,249 @@ model RawEvent {
   @@index([assetClass])
 }
 
+// ─── Analysis ────────────────────────────────────────────────────────────────
+
 model Analysis {
   id              String    @id @default(cuid())
   rawEventId      String    @unique
   rawEvent        RawEvent  @relation(fields: [rawEventId], references: [id], onDelete: Cascade)
+
+  // Core output
   bearThesis      String
   convictionScore Int       // 1-10
-  signalType      String    // "earnings_miss" | "sec_filing" | "news_negative" | "macro" | "crypto_dump" | "insider_sell" | "guidance_cut" | "regulatory"
+  signalType      String
   affectedTickers String    // JSON array
   sector          String?
   catalystDate    DateTime?
-  analysisJson    String
+  analysisJson    String    // full raw AI response
+
+  // AI metadata
+  promptVersion   String    @default("v1")
+  modelName       String    @default("claude-sonnet-4-6")
+
+  // Extended AI output fields
+  confidenceLabel String?   // "high" | "medium" | "low" | "speculative"
+  timeHorizon     String?   // "1-7d" | "1-4w" | "1-3m" | "3m+"
+  severity        String?   // "low" | "medium" | "high" | "critical"
+  noveltyScore    Int?      // 1-10
+  keyRisks        String?   // JSON array of strings
+  counterArgs     String?   // JSON array of strings
+  sourceQuality   String?   // "primary" | "secondary" | "aggregated"
+  industry        String?
+  uncertaintyNotes String?
+
+  // Freshness
+  isStale         Boolean   @default(false)
+  stalledAt       DateTime?
+
+  // Legacy price snapshot — being superseded by PerformanceSnapshot
+  priceSnapshot   String?
+
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
+
+  comments        Comment[]
+  votes           Vote[]
+  performance     PerformanceSnapshot[]
+  versions        AnalysisVersion[]
 
   @@index([convictionScore])
   @@index([signalType])
   @@index([createdAt])
+  @@index([sector])
+  @@index([isStale])
 }
 
+model AnalysisVersion {
+  id              String   @id @default(cuid())
+  analysisId      String
+  analysis        Analysis @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+  modelName       String
+  promptVersion   String
+  rawOutput       String   // full JSON from Claude
+  convictionScore Int
+  bearThesis      String
+  createdAt       DateTime @default(now())
+
+  @@index([analysisId])
+}
+
+// ─── Performance Tracking ────────────────────────────────────────────────────
+
+model PerformanceSnapshot {
+  id            String   @id @default(cuid())
+  analysisId    String
+  analysis      Analysis @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+  ticker        String
+
+  pubPrice      Float?   // closing price on publishedAt date
+  price1d       Float?
+  price5d       Float?
+  price30d      Float?
+  price90d      Float?
+  priceCurrent  Float?
+
+  spyReturn1d   Float?   // SPY % return over same horizon, for relative comparison
+  spyReturn30d  Float?
+  spyReturn90d  Float?
+
+  // "pending" | "confirmed" | "invalidated" | "mixed" | "expired"
+  status        String   @default("pending")
+
+  lastUpdated   DateTime @default(now())
+  createdAt     DateTime @default(now())
+
+  @@unique([analysisId, ticker])
+  @@index([analysisId])
+  @@index([status])
+}
+
+// ─── Social ───────────────────────────────────────────────────────────────────
+
+model Vote {
+  id         String   @id @default(cuid())
+  userId     String
+  analysisId String
+  value      Int      // 1 = agree, -1 = disagree
+  createdAt  DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  analysis   Analysis @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, analysisId])
+  @@index([analysisId])
+}
+
+model Comment {
+  id         String    @id @default(cuid())
+  content    String
+  createdAt  DateTime  @default(now())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  analysisId String
+  analysis   Analysis  @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+  parentId   String?
+  parent     Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies    Comment[] @relation("CommentReplies")
+  flagged    Boolean   @default(false)
+  flags      ModerationFlag[]
+
+  @@index([analysisId])
+  @@index([userId])
+  @@index([parentId])
+}
+
+model ModerationFlag {
+  id         String   @id @default(cuid())
+  reporterId String
+  reporter   User     @relation("flags_filed", fields: [reporterId], references: [id])
+  commentId  String?
+  comment    Comment? @relation(fields: [commentId], references: [id])
+  reason     String   // "spam" | "misleading" | "offensive" | "manipulation"
+  resolved   Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  @@index([commentId])
+  @@index([resolved])
+}
+
+// ─── Watchlist ────────────────────────────────────────────────────────────────
+
+model Watchlist {
+  id        String   @id @default(cuid())
+  userId    String
+  symbol    String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, symbol])
+  @@index([userId])
+}
+
+model WatchlistNote {
+  id        String   @id @default(cuid())
+  userId    String
+  symbol    String
+  note      String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, symbol])
+}
+
+// ─── User Preferences & Reputation ───────────────────────────────────────────
+
+model SavedFilter {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  filters   String   // JSON: { signalType, sector, minScore, assetClass, sortBy }
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model NotificationPreference {
+  id                     String  @id @default(cuid())
+  userId                 String  @unique
+  user                   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  emailOnHighConviction  Boolean @default(false)
+  minConvictionThreshold Int     @default(7)
+  watchlistAlertsOnly    Boolean @default(true)
+  emailDigestFrequency   String  @default("none") // "none" | "daily" | "weekly"
+}
+
+model UserReputation {
+  userId              String  @id
+  user                User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  totalVotesGiven     Int     @default(0)
+  totalVotesReceived  Int     @default(0)
+  confirmedTheses     Int     @default(0)
+  invalidatedTheses   Int     @default(0)
+  accuracyRate        Float?
+  updatedAt           DateTime @updatedAt
+}
+
+// ─── Ticker & Price Cache ────────────────────────────────────────────────────
+
 model TickerCache {
-  symbol        String    @id
-  name          String?
-  sector        String?
-  assetClass    String    // "stock" | "crypto"
-  lastPrice     Float?
+  symbol         String    @id
+  name           String?
+  sector         String?
+  assetClass     String    // "stock" | "crypto"
+  lastPrice      Float?
   priceUpdatedAt DateTime?
 }
 
+// ─── Scheduler & Observability ───────────────────────────────────────────────
+
 model SchedulerRun {
-  id              String    @id @default(cuid())
-  startedAt       DateTime  @default(now())
-  finishedAt      DateTime?
-  status          String    // "running" | "success" | "partial" | "error"
-  eventsFound     Int       @default(0)
-  eventsAnalyzed  Int       @default(0)
-  errorMessage    String?
+  id                String    @id @default(cuid())
+  startedAt         DateTime  @default(now())
+  finishedAt        DateTime?
+  status            String    // "running" | "success" | "partial" | "failed"
+  jobType           String    @default("full") // "full" | "backfill" | "dry_run" | "manual"
+  triggeredBy       String    @default("cron") // "cron" | "manual" | "api"
+  eventsFound       Int       @default(0)
+  eventsAnalyzed    Int       @default(0)
+  deduplicatedCount Int       @default(0)
+  claudeCost        Float?    // estimated USD
+  errorMessage      String?
+
+  @@index([startedAt])
+  @@index([status])
+}
+
+model ApiUsageLog {
+  id        String   @id @default(cuid())
+  provider  String   // "polygon" | "anthropic"
+  endpoint  String
+  costUsd   Float?
+  tokens    Int?
+  latencyMs Int?
+  success   Boolean
+  error     String?
+  createdAt DateTime @default(now())
+
+  @@index([provider, createdAt])
 }

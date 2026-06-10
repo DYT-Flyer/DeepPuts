@@ -1,37 +1,42 @@
 "use client";
 
-import { cn } from "@/lib/utils";
-
 interface Props {
   score: number;
   size?: "sm" | "md" | "lg";
 }
 
 export function ConvictionBadge({ score, size = "md" }: Props) {
-  const color =
-    score >= 7
-      ? "bg-red-500/20 text-red-400 border-red-500/40"
-      : score >= 4
-      ? "bg-yellow-500/20 text-yellow-400 border-yellow-500/40"
-      : "bg-zinc-700/50 text-zinc-400 border-zinc-600";
+  const isHigh = score >= 7;
+  const isMid = score >= 4 && score < 7;
 
-  const sizeClass =
-    size === "lg"
-      ? "text-2xl font-bold px-3 py-1"
-      : size === "sm"
-      ? "text-xs px-1.5 py-0.5"
-      : "text-sm font-semibold px-2 py-0.5";
+  const bg = isHigh ? "rgba(244,63,94,0.1)" : isMid ? "rgba(245,158,11,0.1)" : "rgba(255,255,255,0.04)";
+  const border = isHigh ? "rgba(244,63,94,0.3)" : isMid ? "rgba(245,158,11,0.3)" : "rgba(255,255,255,0.08)";
+  const color = isHigh ? "#f43f5e" : isMid ? "#f59e0b" : "#555";
+
+  const fontSize = size === "lg" ? "20px" : size === "sm" ? "11px" : "12px";
+  const padding = size === "lg" ? "4px 10px" : size === "sm" ? "2px 6px" : "2px 8px";
 
   return (
     <span
-      className={cn(
-        "inline-flex items-center rounded border font-mono",
+      style={{
+        background: bg,
+        border: `1px solid ${border}`,
         color,
-        sizeClass
-      )}
+        fontSize,
+        padding,
+        fontFamily: "var(--font-mono, monospace)",
+        fontWeight: 600,
+        borderRadius: "6px",
+        display: "inline-flex",
+        alignItems: "center",
+        gap: "2px",
+        whiteSpace: "nowrap",
+        letterSpacing: "-0.02em",
+      }}
       title={`Conviction: ${score}/10`}
     >
-      {score}/10
+      {score}
+      <span style={{ opacity: 0.5, fontWeight: 400 }}>/10</span>
     </span>
   );
 }

@@ -4,3 +4,12 @@ import { twMerge } from "tailwind-merge";
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
+
+export function formatCatalyst(isoDate: string): { label: string; urgent: boolean } | null {
+  const diff = new Date(isoDate).getTime() - Date.now();
+  const days = Math.round(diff / (1000 * 60 * 60 * 24));
+  if (days === 0) return { label: "catalyst today", urgent: true };
+  if (days > 0 && days <= 30) return { label: `in ${days}d`, urgent: days <= 7 };
+  if (days < 0 && days >= -30) return { label: `${Math.abs(days)}d ago`, urgent: false };
+  return null;
+}

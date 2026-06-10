@@ -1,7 +1,7 @@
 import prisma from "@/lib/prisma";
 import { fetchStockNews, fetchCryptoNews } from "@/lib/polygon/news";
 import { detectAnomalies } from "@/lib/polygon/aggregates";
-import { analyzeEvent } from "@/lib/claude/analyze";
+import { analyzeEvent, PROMPT_VERSION } from "@/lib/claude/analyze";
 import type { PrismaClient } from "@prisma/client";
 
 const ANALYSIS_DELAY_MS = 2000; // 2s between Claude calls
@@ -147,16 +147,32 @@ export async function runRefreshCycle(db: PrismaClient = prisma): Promise<void> 
 
     console.log(`[scheduler] Stored ${eventsFound} new events, now analyzing...`);
 
+    let totalClaudeCost = 0;
+
     // --- Analyze new events with Claude ---
     for (const event of newEvents) {
       try {
-        const result = await analyzeEvent({
+        const { result, usage } = await analyzeEvent({
           assetClass: event.assetClass as "stock" | "crypto",
           headline: event.headline,
           summary: event.summary,
           tickers: event.tickers,
           publishedAt: event.publishedAt.toISOString(),
         });
+
+        totalClaudeCost += usage.estimatedCostUsd;
+
+        // Log API usage
+        await db.apiUsageLog.create({
+          data: {
+            provider: "anthropic",
+            endpoint: "messages",
+            costUsd: usage.estimatedCostUsd,
+            tokens: usage.inputTokens + usage.outputTokens,
+            latencyMs: usage.latencyMs,
+            success: result.convictionScore > 1 || result.bearThesis !== "Analysis could not be completed.",
+          },
+        }).catch(() => {}); // non-fatal
 
         await db.analysis.create({
           data: {
@@ -168,6 +184,15 @@ export async function runRefreshCycle(db: PrismaClient = prisma): Promise<void> 
             sector: result.sector,
             catalystDate: result.catalystDate ? new Date(result.catalystDate) : null,
             analysisJson: JSON.stringify(result),
+            promptVersion: PROMPT_VERSION,
+            modelName: "claude-opus-4-6",
+            ...(result.keyRisks        ? { keyRisks: JSON.stringify(result.keyRisks) }           : {}),
+            ...(result.counterArgs     ? { counterArgs: JSON.stringify(result.counterArgs) }     : {}),
+            ...(result.confidenceLabel ? { confidenceLabel: result.confidenceLabel }             : {}),
+            ...(result.timeHorizon     ? { timeHorizon: result.timeHorizon }                     : {}),
+            ...(result.severity        ? { severity: result.severity }                           : {}),
+            ...(result.sourceQuality   ? { sourceQuality: result.sourceQuality }                 : {}),
+            ...(result.industry        ? { industry: result.industry }                           : {}),
           },
         });
 
@@ -187,6 +212,7 @@ export async function runRefreshCycle(db: PrismaClient = prisma): Promise<void> 
         finishedAt: new Date(),
         eventsFound,
         eventsAnalyzed,
+        claudeCost: totalClaudeCost > 0 ? totalClaudeCost : null,
         errorMessage: errors.length > 0 ? errors.slice(0, 5).join("; ") : null,
       },
     });
