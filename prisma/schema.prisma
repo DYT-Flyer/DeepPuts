@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -19,15 +19,15 @@ model User {
   acceptedTermsAt DateTime?
   createdAt       DateTime  @default(now())
 
-  sessions        Session[]
-  comments        Comment[]
-  votes           Vote[]
-  watchlist       Watchlist[]
-  watchlistNotes  WatchlistNote[]
-  savedFilters    SavedFilter[]
-  notifPrefs      NotificationPreference?
-  reputation      UserReputation?
-  flagsFiled      ModerationFlag[] @relation("flags_filed")
+  sessions       Session[]
+  comments       Comment[]
+  votes          Vote[]
+  watchlist      Watchlist[]
+  watchlistNotes WatchlistNote[]
+  savedFilters   SavedFilter[]
+  notifPrefs     NotificationPreference?
+  reputation     UserReputation?
+  flagsFiled     ModerationFlag[]        @relation("flags_filed")
 }
 
 model Session {
@@ -56,23 +56,23 @@ model IngestionRun {
 }
 
 model CanonicalEvent {
-  id                String               @id @default(cuid())
-  canonicalHash     String               @unique
-  primaryHeadline   String
-  summary           String?
-  assetClass        String               // "stock" | "crypto"
-  primaryTicker     String?
-  affectedTickers   String               // JSON array of strings
-  mergedEventCount  Int                  @default(1)
-  firstSeenAt       DateTime
-  lastSeenAt        DateTime
-  createdAt         DateTime             @default(now())
-  updatedAt         DateTime             @updatedAt
-  rawEvents         RawEvent[]
-  cluster           EventCluster?
+  id                 String                @id @default(cuid())
+  canonicalHash      String                @unique
+  primaryHeadline    String
+  summary            String?
+  assetClass         String // "stock" | "crypto"
+  primaryTicker      String?
+  affectedTickers    String // JSON array of strings
+  mergedEventCount   Int                   @default(1)
+  firstSeenAt        DateTime
+  lastSeenAt         DateTime
+  createdAt          DateTime              @default(now())
+  updatedAt          DateTime              @updatedAt
+  rawEvents          RawEvent[]
+  cluster            EventCluster?
   clusterMemberships EventClusterMember[]
-  analysis          Analysis?
-  pipelineRuns      AnalysisPipelineRun[]
+  analysis           Analysis?
+  pipelineRuns       AnalysisPipelineRun[]
 
   @@index([assetClass, firstSeenAt])
   @@index([primaryTicker])
@@ -99,7 +99,7 @@ model EventClusterMember {
   rawEvent         RawEvent       @relation(fields: [rawEventId], references: [id], onDelete: Cascade)
   canonicalEventId String
   canonicalEvent   CanonicalEvent @relation(fields: [canonicalEventId], references: [id], onDelete: Cascade)
-  matchType        String         // "exact_checksum" | "url_match" | "headline_fuzzy" | "manual_merge"
+  matchType        String // "exact_checksum" | "url_match" | "headline_fuzzy" | "manual_merge"
   similarityScore  Float          @default(1.0)
   createdAt        DateTime       @default(now())
 
@@ -111,19 +111,19 @@ model RawEvent {
   id               String              @id @default(cuid())
   provider         String              @default("polygon")
   providerEventId  String?
-  source           String              // "polygon_news" | "polygon_anomaly"
-  assetClass       String              // "stock" | "crypto"
+  source           String // "polygon_news" | "polygon_anomaly"
+  assetClass       String // "stock" | "crypto"
   externalId       String              @unique
-  tickers          String              // JSON array of strings
+  tickers          String // JSON array of strings
   headline         String
   summary          String?
   publishedAt      DateTime
   rawJson          String
-  payloadHash      String?             // SHA-256 checksum of rawJson
+  payloadHash      String? // SHA-256 checksum of rawJson
   schemaVersion    String              @default("v1")
   processingStatus String              @default("pending") // "pending" | "canonicalized" | "quarantined" | "duplicate"
   quarantineReason String?
-  validationErrors String?             // JSON error detail string
+  validationErrors String? // JSON error detail string
   fetchedAt        DateTime            @default(now())
   ingestionRunId   String?
   ingestionRun     IngestionRun?       @relation(fields: [ingestionRunId], references: [id])
@@ -147,42 +147,42 @@ model Analysis {
 
   // Core output
   bearThesis      String
-  convictionScore Int       // 1-10
+  convictionScore Int // 1-10
   signalType      String
-  affectedTickers String    // JSON array
+  affectedTickers String // JSON array
   sector          String?
   catalystDate    DateTime?
-  analysisJson    String    // full raw AI response
+  analysisJson    String // full raw AI response
 
   // AI metadata
-  promptVersion   String    @default("v1")
-  modelName       String    @default("claude-sonnet-4-6")
+  promptVersion String @default("v1")
+  modelName     String @default("claude-sonnet-4-6")
 
   // Extended AI output fields
-  confidenceLabel String?   // "high" | "medium" | "low" | "speculative"
-  timeHorizon     String?   // "1-7d" | "1-4w" | "1-3m" | "3m+"
-  severity        String?   // "low" | "medium" | "high" | "critical"
-  noveltyScore    Int?      // 1-10
-  keyRisks        String?   // JSON array of strings
-  counterArgs     String?   // JSON array of strings
-  sourceQuality   String?   // "primary" | "secondary" | "aggregated"
-  industry        String?
+  confidenceLabel  String? // "high" | "medium" | "low" | "speculative"
+  timeHorizon      String? // "1-7d" | "1-4w" | "1-3m" | "3m+"
+  severity         String? // "low" | "medium" | "high" | "critical"
+  noveltyScore     Int? // 1-10
+  keyRisks         String? // JSON array of strings
+  counterArgs      String? // JSON array of strings
+  sourceQuality    String? // "primary" | "secondary" | "aggregated"
+  industry         String?
   uncertaintyNotes String?
 
   // Freshness
-  isStale         Boolean   @default(false)
-  stalledAt       DateTime?
+  isStale   Boolean   @default(false)
+  stalledAt DateTime?
 
   // Legacy price snapshot — being superseded by PerformanceSnapshot
-  priceSnapshot   String?
+  priceSnapshot String?
 
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  comments        Comment[]
-  votes           Vote[]
-  performance     PerformanceSnapshot[]
-  versions        AnalysisVersion[]
+  comments    Comment[]
+  votes       Vote[]
+  performance PerformanceSnapshot[]
+  versions    AnalysisVersion[]
 
   @@index([convictionScore])
   @@index([signalType])
@@ -197,7 +197,7 @@ model AnalysisVersion {
   analysis        Analysis @relation(fields: [analysisId], references: [id], onDelete: Cascade)
   modelName       String
   promptVersion   String
-  rawOutput       String   // full JSON from Claude
+  rawOutput       String // full JSON from Claude
   convictionScore Int
   bearThesis      String
   createdAt       DateTime @default(now())
@@ -215,8 +215,8 @@ model AnalysisPipelineRun {
   promptHash       String
   tokenUsage       Int            @default(0)
   latencyMs        Int            @default(0)
-  status           String         // "success" | "failed" | "skipped"
-  retryHistory     String?        // JSON array of errors if failed and retried
+  status           String // "success" | "failed" | "skipped"
+  retryHistory     String? // JSON array of errors if failed and retried
   createdAt        DateTime       @default(now())
 
   @@unique([canonicalEventId, promptVersion, modelName, inputHash])
@@ -226,27 +226,27 @@ model AnalysisPipelineRun {
 // ─── Performance Tracking ────────────────────────────────────────────────────
 
 model PerformanceSnapshot {
-  id            String   @id @default(cuid())
-  analysisId    String
-  analysis      Analysis @relation(fields: [analysisId], references: [id], onDelete: Cascade)
-  ticker        String
+  id         String   @id @default(cuid())
+  analysisId String
+  analysis   Analysis @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+  ticker     String
 
-  pubPrice      Float?   // closing price on publishedAt date
-  price1d       Float?
-  price5d       Float?
-  price30d      Float?
-  price90d      Float?
-  priceCurrent  Float?
+  pubPrice     Float? // closing price on publishedAt date
+  price1d      Float?
+  price5d      Float?
+  price30d     Float?
+  price90d     Float?
+  priceCurrent Float?
 
-  spyReturn1d   Float?   // SPY % return over same horizon, for relative comparison
-  spyReturn30d  Float?
-  spyReturn90d  Float?
+  spyReturn1d  Float? // SPY % return over same horizon, for relative comparison
+  spyReturn30d Float?
+  spyReturn90d Float?
 
   // "pending" | "confirmed" | "invalidated" | "mixed" | "expired"
-  status        String   @default("pending")
+  status String @default("pending")
 
-  lastUpdated   DateTime @default(now())
-  createdAt     DateTime @default(now())
+  lastUpdated DateTime @default(now())
+  createdAt   DateTime @default(now())
 
   @@unique([analysisId, ticker])
   @@index([analysisId])
@@ -259,7 +259,7 @@ model Vote {
   id         String   @id @default(cuid())
   userId     String
   analysisId String
-  value      Int      // 1 = agree, -1 = disagree
+  value      Int // 1 = agree, -1 = disagree
   createdAt  DateTime @default(now())
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   analysis   Analysis @relation(fields: [analysisId], references: [id], onDelete: Cascade)
@@ -269,17 +269,17 @@ model Vote {
 }
 
 model Comment {
-  id         String    @id @default(cuid())
+  id         String           @id @default(cuid())
   content    String
-  createdAt  DateTime  @default(now())
+  createdAt  DateTime         @default(now())
   userId     String
-  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user       User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   analysisId String
-  analysis   Analysis  @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+  analysis   Analysis         @relation(fields: [analysisId], references: [id], onDelete: Cascade)
   parentId   String?
-  parent     Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
-  replies    Comment[] @relation("CommentReplies")
-  flagged    Boolean   @default(false)
+  parent     Comment?         @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies    Comment[]        @relation("CommentReplies")
+  flagged    Boolean          @default(false)
   flags      ModerationFlag[]
 
   @@index([analysisId])
@@ -293,7 +293,7 @@ model ModerationFlag {
   reporter   User     @relation("flags_filed", fields: [reporterId], references: [id])
   commentId  String?
   comment    Comment? @relation(fields: [commentId], references: [id])
-  reason     String   // "spam" | "misleading" | "offensive" | "manipulation"
+  reason     String // "spam" | "misleading" | "offensive" | "manipulation"
   resolved   Boolean  @default(false)
   createdAt  DateTime @default(now())
 
@@ -332,7 +332,7 @@ model SavedFilter {
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   name      String
-  filters   String   // JSON: { signalType, sector, minScore, assetClass, sortBy }
+  filters   String // JSON: { signalType, sector, minScore, assetClass, sortBy }
   createdAt DateTime @default(now())
 
   @@index([userId])
@@ -349,14 +349,14 @@ model NotificationPreference {
 }
 
 model UserReputation {
-  userId              String  @id
-  user                User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  totalVotesGiven     Int     @default(0)
-  totalVotesReceived  Int     @default(0)
-  confirmedTheses     Int     @default(0)
-  invalidatedTheses   Int     @default(0)
-  accuracyRate        Float?
-  updatedAt           DateTime @updatedAt
+  userId             String   @id
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  totalVotesGiven    Int      @default(0)
+  totalVotesReceived Int      @default(0)
+  confirmedTheses    Int      @default(0)
+  invalidatedTheses  Int      @default(0)
+  accuracyRate       Float?
+  updatedAt          DateTime @updatedAt
 }
 
 // ─── Ticker & Price Cache ────────────────────────────────────────────────────
@@ -365,7 +365,7 @@ model TickerCache {
   symbol         String    @id
   name           String?
   sector         String?
-  assetClass     String    // "stock" | "crypto"
+  assetClass     String // "stock" | "crypto"
   lastPrice      Float?
   priceUpdatedAt DateTime?
 }
@@ -376,13 +376,13 @@ model SchedulerRun {
   id                String    @id @default(cuid())
   startedAt         DateTime  @default(now())
   finishedAt        DateTime?
-  status            String    // "running" | "success" | "partial" | "failed"
+  status            String // "running" | "success" | "partial" | "failed"
   jobType           String    @default("full") // "full" | "backfill" | "dry_run" | "manual"
   triggeredBy       String    @default("cron") // "cron" | "manual" | "api"
   eventsFound       Int       @default(0)
   eventsAnalyzed    Int       @default(0)
   deduplicatedCount Int       @default(0)
-  claudeCost        Float?    // estimated USD
+  claudeCost        Float? // estimated USD
   errorMessage      String?
 
   @@index([startedAt])
@@ -391,7 +391,7 @@ model SchedulerRun {
 
 model ApiUsageLog {
   id        String   @id @default(cuid())
-  provider  String   // "polygon" | "anthropic"
+  provider  String // "polygon" | "anthropic"
   endpoint  String
   costUsd   Float?
   tokens    Int?

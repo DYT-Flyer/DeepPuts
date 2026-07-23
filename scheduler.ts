@@ -5,6 +5,9 @@ import { resolve } from "path";
 // Load .env.local
 config({ path: resolve(__dirname, ".env.local") });
 
+// Validate environment variables
+import "./src/lib/env";
+
 import { runRefreshCycle } from "./src/lib/scheduler/pipeline";
 
 let isRunning = false;
