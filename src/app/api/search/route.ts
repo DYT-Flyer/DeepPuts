@@ -14,18 +14,22 @@ export async function GET(req: NextRequest) {
         OR: [
           { bearThesis: { contains: q } },
           { affectedTickers: { contains: q.toUpperCase() } },
-          { rawEvent: { headline: { contains: q } } },
-          { rawEvent: { summary: { contains: q } } },
+          { canonicalEvent: { primaryHeadline: { contains: q } } },
+          { canonicalEvent: { summary: { contains: q } } },
           { sector: { contains: q } },
         ],
       },
-      include: { rawEvent: true, _count: { select: { comments: true } }, votes: true },
+      include: { 
+        canonicalEvent: { include: { rawEvents: { take: 1, select: { rawJson: true } } } }, 
+        _count: { select: { comments: true } }, 
+        votes: true 
+      },
       orderBy: { convictionScore: "desc" },
       take: 20,
     }),
     prisma.rawEvent.findMany({
       where: {
-        analysis: null, // only events without analysis (avoid duplicates)
+        canonicalEvent: { is: { analysis: null } }, // only events without analysis (avoid duplicates)
         OR: [
           { headline: { contains: q } },
           { summary: { contains: q } },
@@ -52,13 +56,15 @@ export async function GET(req: NextRequest) {
     voteScore: a.votes.reduce((s, v) => s + v.value, 0),
     userVote: (userId ? (a.votes.find((v) => v.userId === userId)?.value ?? 0) : 0) as 1 | -1 | 0,
     event: {
-      id: a.rawEvent.id,
-      headline: a.rawEvent.headline,
-      summary: a.rawEvent.summary,
-      publishedAt: a.rawEvent.publishedAt.toISOString(),
-      assetClass: a.rawEvent.assetClass as "stock" | "crypto",
-      source: a.rawEvent.source,
-      articleUrl: (JSON.parse(a.rawEvent.rawJson) as { article_url?: string }).article_url ?? null,
+      id: a.canonicalEvent.id,
+      headline: a.canonicalEvent.primaryHeadline,
+      summary: a.canonicalEvent.summary,
+      publishedAt: a.canonicalEvent.firstSeenAt.toISOString(),
+      assetClass: a.canonicalEvent.assetClass as "stock" | "crypto",
+      source: "polygon_news",
+      articleUrl: a.canonicalEvent.rawEvents?.[0]?.rawJson
+        ? (JSON.parse(a.canonicalEvent.rawEvents[0].rawJson) as { article_url?: string }).article_url ?? null
+        : null,
     },
   }));
 

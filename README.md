@@ -8,7 +8,7 @@ AI-structured bear theses on stocks and crypto, ranked by conviction and validat
 
 ## What it is
 
-DeepPuts is a bearish market intelligence platform. It ingests market events from Polygon.io, runs them through Claude to generate structured bear theses with conviction scores (1–10), and surfaces the results through a community-validated feed with voting, comments, and price performance tracking.
+DeepPuts is a bearish market intelligence platform. It ingests market events from Polygon.io, runs them through Google Gemini to generate structured bear theses with conviction scores (1–10), and surfaces the results through a community-validated feed with voting, comments, and price performance tracking.
 
 Most market intelligence tools are structurally bullish. DeepPuts is the counterweight.
 
@@ -21,7 +21,7 @@ Most market intelligence tools are structurally bullish. DeepPuts is the counter
 | Framework | Next.js 15 (App Router) |
 | Database | SQLite via Prisma (local dev) |
 | Auth | NextAuth v5 (credentials provider) |
-| AI | Anthropic Claude (`claude-sonnet-4-6`) |
+| AI | Google Gemini (`gemini-3.6-flash`) |
 | Market data | Polygon.io |
 | Validation | Zod v4 |
 | Styling | Tailwind + inline styles |
@@ -45,7 +45,7 @@ DATABASE_URL="file:./prisma/deepputs.db"
 NEXTAUTH_SECRET=<32+ random bytes>
 NEXTAUTH_URL=http://localhost:3000
 POLYGON_API_KEY=<your key>
-ANTHROPIC_API_KEY=<your key>
+GEMINI_API_KEY=<your key>
 ```
 
 ### 3. Set up the database

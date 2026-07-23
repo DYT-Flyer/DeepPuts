@@ -17,7 +17,11 @@ export async function GET(
     where: {
       affectedTickers: { contains: upper },
     },
-    include: { rawEvent: true, _count: { select: { comments: true } }, votes: true },
+    include: { 
+      canonicalEvent: { include: { rawEvents: { take: 1, select: { rawJson: true } } } }, 
+      _count: { select: { comments: true } }, 
+      votes: true 
+    },
     orderBy: [{ convictionScore: "desc" }, { createdAt: "desc" }],
     take: 50,
   });
@@ -44,13 +48,15 @@ export async function GET(
       voteScore,
       userVote,
       event: {
-        id: a.rawEvent.id,
-        headline: a.rawEvent.headline,
-        summary: a.rawEvent.summary,
-        publishedAt: a.rawEvent.publishedAt.toISOString(),
-        assetClass: a.rawEvent.assetClass as "stock" | "crypto",
-        source: a.rawEvent.source,
-        articleUrl: (JSON.parse(a.rawEvent.rawJson) as { article_url?: string }).article_url ?? null,
+        id: a.canonicalEvent.id,
+        headline: a.canonicalEvent.primaryHeadline,
+        summary: a.canonicalEvent.summary,
+        publishedAt: a.canonicalEvent.firstSeenAt.toISOString(),
+        assetClass: a.canonicalEvent.assetClass as "stock" | "crypto",
+        source: "polygon_news",
+        articleUrl: a.canonicalEvent.rawEvents?.[0]?.rawJson
+          ? (JSON.parse(a.canonicalEvent.rawEvents[0].rawJson) as { article_url?: string }).article_url ?? null
+          : null,
       },
     };
   });

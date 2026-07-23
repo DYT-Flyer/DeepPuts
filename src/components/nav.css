@@ -1,0 +1,211 @@
+/* Nav Component - Premium Vibrant Styling */
+
+.nav-container {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  width: 100%;
+  /* Vibrant glassmorphism */
+  background: rgba(10, 10, 12, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+.nav-content {
+  max-width: 80rem; /* 1280px */
+  margin: 0 auto;
+  padding: 0 1.5rem;
+  height: 5rem; /* 80px */
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+}
+
+/* Logo */
+.nav-logo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
+  flex-shrink: 0;
+  transition: transform 0.2s ease, filter 0.2s ease;
+}
+
+.nav-logo:hover {
+  transform: scale(1.02);
+  filter: drop-shadow(0 0 15px rgba(244, 63, 94, 0.4));
+}
+
+.nav-logo-text {
+  font-size: 2.25rem; /* 4xl */
+  font-weight: 900; /* black */
+  letter-spacing: -0.05em;
+  color: #ffffff;
+  margin: 0;
+}
+
+.nav-logo-highlight {
+  /* Vibrant gradient text */
+  background: linear-gradient(135deg, #f43f5e, #fb923c);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Links Group */
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.nav-separator {
+  color: rgba(255, 255, 255, 0.15);
+  font-size: 1.2rem;
+  margin: 0 0.25rem;
+}
+
+/* Individual Links */
+.nav-link {
+  text-decoration: none;
+  padding: 0.5rem 0.875rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.nav-link-inactive {
+  color: #a1a1aa;
+}
+
+.nav-link-inactive:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.nav-link-active {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+}
+
+/* Link glowing effect on hover */
+.nav-link::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.1),
+    transparent
+  );
+  transition: left 0.5s ease;
+  pointer-events: none;
+}
+
+.nav-link:hover::before {
+  left: 100%;
+}
+
+/* Search Button */
+.nav-search {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  padding: 0.375rem 0.75rem;
+  border-radius: 0.5rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #a1a1aa;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.nav-search:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.05);
+}
+
+.nav-search-shortcut {
+  display: none;
+  font-size: 0.65rem;
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #d4d4d8;
+}
+
+@media (min-width: 768px) {
+  .nav-search-shortcut {
+    display: inline-block;
+  }
+}
+
+.nav-search-text {
+  display: none;
+}
+
+@media (min-width: 640px) {
+  .nav-search-text {
+    display: inline;
+  }
+}
+
+/* Right Section (Auth) */
+.nav-auth {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.nav-auth-user {
+  display: none;
+  font-size: 0.75rem;
+  color: #a1a1aa;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+@media (min-width: 640px) {
+  .nav-auth-user {
+    display: block;
+  }
+}
+
+.nav-auth-user:hover {
+  color: #ffffff;
+}
+
+.nav-auth-btn {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-decoration: none;
+  padding: 0.375rem 0.875rem;
+  border-radius: 9999px;
+  background: linear-gradient(135deg, #f43f5e, #e11d48);
+  color: #ffffff;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 14px rgba(244, 63, 94, 0.3);
+}
+
+.nav-auth-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(244, 63, 94, 0.5);
+  background: linear-gradient(135deg, #fb923c, #f43f5e);
+}

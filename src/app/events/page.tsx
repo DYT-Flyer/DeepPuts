@@ -48,11 +48,24 @@ export default function EventsPage() {
     setLoading(false);
   }, [page, assetClass]);
 
-  useEffect(() => { fetchEvents(true); /* eslint-disable-next-line */ }, [assetClass]);
-  useEffect(() => { if (page > 0) fetchEvents(false); /* eslint-disable-next-line */ }, [page]);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    fetchEvents(true);
+  }, [assetClass]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => { 
+    if (page > 0) fetchEvents(false); 
+  }, [page]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  if (!mounted) return null;
 
   return (
-    <div className="min-h-screen" style={{ background: "var(--bg)" }}>
+    <div className="min-h-screen" style={{ background: "var(--bg)" }} suppressHydrationWarning>
       <Nav userEmail={session?.user?.email} userName={session?.user?.name} />
 
       <main className="max-w-4xl mx-auto px-6 py-8">

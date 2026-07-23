@@ -40,29 +40,110 @@ model Session {
 
 // ─── Market Events ───────────────────────────────────────────────────────────
 
+model IngestionRun {
+  id           String     @id @default(cuid())
+  provider     String     @default("polygon")
+  startedAt    DateTime   @default(now())
+  finishedAt   DateTime?
+  status       String     @default("running") // "running" | "success" | "partial" | "failed"
+  itemCount    Int        @default(0)
+  errorCount   Int        @default(0)
+  errorMessage String?
+  rawEvents    RawEvent[]
+
+  @@index([startedAt])
+  @@index([status])
+}
+
+model CanonicalEvent {
+  id                String               @id @default(cuid())
+  canonicalHash     String               @unique
+  primaryHeadline   String
+  summary           String?
+  assetClass        String               // "stock" | "crypto"
+  primaryTicker     String?
+  affectedTickers   String               // JSON array of strings
+  mergedEventCount  Int                  @default(1)
+  firstSeenAt       DateTime
+  lastSeenAt        DateTime
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+  rawEvents         RawEvent[]
+  cluster           EventCluster?
+  clusterMemberships EventClusterMember[]
+  analysis          Analysis?
+  pipelineRuns      AnalysisPipelineRun[]
+
+  @@index([assetClass, firstSeenAt])
+  @@index([primaryTicker])
+}
+
+model EventCluster {
+  id               String               @id @default(cuid())
+  clusterName      String?
+  canonicalEventId String               @unique
+  canonicalEvent   CanonicalEvent       @relation(fields: [canonicalEventId], references: [id], onDelete: Cascade)
+  matchExplanation String?
+  confidenceScore  Float                @default(1.0)
+  createdAt        DateTime             @default(now())
+  members          EventClusterMember[]
+
+  @@index([canonicalEventId])
+}
+
+model EventClusterMember {
+  id               String         @id @default(cuid())
+  clusterId        String
+  cluster          EventCluster   @relation(fields: [clusterId], references: [id], onDelete: Cascade)
+  rawEventId       String         @unique
+  rawEvent         RawEvent       @relation(fields: [rawEventId], references: [id], onDelete: Cascade)
+  canonicalEventId String
+  canonicalEvent   CanonicalEvent @relation(fields: [canonicalEventId], references: [id], onDelete: Cascade)
+  matchType        String         // "exact_checksum" | "url_match" | "headline_fuzzy" | "manual_merge"
+  similarityScore  Float          @default(1.0)
+  createdAt        DateTime       @default(now())
+
+  @@index([clusterId])
+  @@index([canonicalEventId])
+}
+
 model RawEvent {
-  id          String    @id @default(cuid())
-  source      String    // "polygon_news" | "polygon_anomaly"
-  assetClass  String    // "stock" | "crypto"
-  externalId  String    @unique
-  tickers     String    // JSON array of strings
-  headline    String
-  summary     String?
-  publishedAt DateTime
-  rawJson     String
-  fetchedAt   DateTime  @default(now())
-  analysis    Analysis?
+  id               String              @id @default(cuid())
+  provider         String              @default("polygon")
+  providerEventId  String?
+  source           String              // "polygon_news" | "polygon_anomaly"
+  assetClass       String              // "stock" | "crypto"
+  externalId       String              @unique
+  tickers          String              // JSON array of strings
+  headline         String
+  summary          String?
+  publishedAt      DateTime
+  rawJson          String
+  payloadHash      String?             // SHA-256 checksum of rawJson
+  schemaVersion    String              @default("v1")
+  processingStatus String              @default("pending") // "pending" | "canonicalized" | "quarantined" | "duplicate"
+  quarantineReason String?
+  validationErrors String?             // JSON error detail string
+  fetchedAt        DateTime            @default(now())
+  ingestionRunId   String?
+  ingestionRun     IngestionRun?       @relation(fields: [ingestionRunId], references: [id])
+  canonicalEventId String?
+  canonicalEvent   CanonicalEvent?     @relation(fields: [canonicalEventId], references: [id])
+  clusterMember    EventClusterMember?
 
   @@index([publishedAt])
   @@index([assetClass])
+  @@index([payloadHash])
+  @@index([processingStatus])
+  @@index([canonicalEventId])
 }
 
 // ─── Analysis ────────────────────────────────────────────────────────────────
 
 model Analysis {
-  id              String    @id @default(cuid())
-  rawEventId      String    @unique
-  rawEvent        RawEvent  @relation(fields: [rawEventId], references: [id], onDelete: Cascade)
+  id               String         @id @default(cuid())
+  canonicalEventId String         @unique
+  canonicalEvent   CanonicalEvent @relation(fields: [canonicalEventId], references: [id], onDelete: Cascade)
 
   // Core output
   bearThesis      String
@@ -122,6 +203,24 @@ model AnalysisVersion {
   createdAt       DateTime @default(now())
 
   @@index([analysisId])
+}
+
+model AnalysisPipelineRun {
+  id               String         @id @default(cuid())
+  canonicalEventId String
+  canonicalEvent   CanonicalEvent @relation(fields: [canonicalEventId], references: [id], onDelete: Cascade)
+  promptVersion    String
+  modelName        String
+  inputHash        String
+  promptHash       String
+  tokenUsage       Int            @default(0)
+  latencyMs        Int            @default(0)
+  status           String         // "success" | "failed" | "skipped"
+  retryHistory     String?        // JSON array of errors if failed and retried
+  createdAt        DateTime       @default(now())
+
+  @@unique([canonicalEventId, promptVersion, modelName, inputHash])
+  @@index([status])
 }
 
 // ─── Performance Tracking ────────────────────────────────────────────────────

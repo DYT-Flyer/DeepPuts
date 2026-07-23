@@ -64,13 +64,13 @@ export async function GET(
 
   const analysis = await prisma.analysis.findUnique({
     where: { id },
-    include: { rawEvent: true },
+    include: { canonicalEvent: true },
   });
 
   if (!analysis) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   const tickers = (JSON.parse(analysis.affectedTickers) as string[]).slice(0, 4);
-  const pubDate = analysis.rawEvent.publishedAt;
+  const pubDate = analysis.canonicalEvent.firstSeenAt;
   const catalystDate = analysis.catalystDate?.toISOString() ?? null;
 
   // Load cached pub prices

@@ -1,4 +1,4 @@
-const POLYGON_BASE = "https://api.massive.com";
+const POLYGON_BASE = "https://api.polygon.io";
 const MIN_INTERVAL_MS = 12_500; // 5 req/min = 1 per 12.5s (with buffer)
 
 type QueueItem = {
@@ -37,7 +37,10 @@ class PolygonClient {
           url.searchParams.set(k, v);
         }
 
-        const res = await fetch(url.toString());
+        const tickerParam = item.params.ticker ? ` (${item.params.ticker})` : "";
+        console.log(`[polygon] API call: ${item.path}${tickerParam} [${this.queue.length} left in queue]`);
+
+        const res = await fetch(url.toString(), { signal: AbortSignal.timeout(10000) });
         if (!res.ok) {
           item.reject(new Error(`Polygon API error ${res.status}: ${await res.text()}`));
         } else {

@@ -110,6 +110,19 @@ async function main() {
   ];
 
   for (const mock of mockEvents) {
+    
+    const canonical = await prisma.canonicalEvent.create({
+      data: {
+        canonicalHash: mock.externalId + "-hash",
+        primaryHeadline: mock.headline,
+        summary: mock.summary,
+        assetClass: mock.assetClass,
+        primaryTicker: mock.tickers[0],
+        affectedTickers: JSON.stringify(mock.tickers),
+        firstSeenAt: mock.publishedAt,
+        lastSeenAt: mock.publishedAt,
+      }
+    });
     const event = await prisma.rawEvent.create({
       data: {
         externalId: mock.externalId,
@@ -119,13 +132,13 @@ async function main() {
         headline: mock.headline,
         summary: mock.summary,
         publishedAt: mock.publishedAt,
-        rawJson: "{}",
+        rawJson: "{}", canonicalEventId: canonical.id, processingStatus: "canonicalized"
       },
     });
 
     await prisma.analysis.create({
       data: {
-        rawEventId: event.id,
+        canonicalEventId: canonical.id,
         bearThesis: mock.bearThesis,
         convictionScore: mock.convictionScore,
         signalType: mock.signalType,

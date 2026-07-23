@@ -1,0 +1,1 @@
+{"nodes": [{"id": "signal_badge", "label": "signal-badge.tsx", "file_type": "code", "source_file": "src/components/signal-badge.tsx", "source_location": "L1"}], "edges": [{"source": "signal_badge", "target": "types", "relation": "imports_from", "confidence": "EXTRACTED", "source_file": "src/components/signal-badge.tsx", "source_location": "L3", "weight": 1.0}]}

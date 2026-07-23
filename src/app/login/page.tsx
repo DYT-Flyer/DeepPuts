@@ -1,11 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { TrendingDown } from "lucide-react";
+import { TrendingDown, X } from "lucide-react";
+
+import Link from "next/link";
+import "./login.css";
 
 export default function LoginPage() {
+  const [mounted, setMounted] = useState(false);
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -13,6 +17,10 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -43,39 +51,40 @@ export default function LoginPage() {
     }
   }
 
-  return (
-    <div className="min-h-screen flex items-center justify-center px-4" style={{ background: "var(--bg)" }}>
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div style={{ position: "absolute", top: "20%", left: "50%", transform: "translate(-50%,-50%)", width: "600px", height: "600px", background: "radial-gradient(circle, rgba(244,63,94,0.04) 0%, transparent 70%)", borderRadius: "50%" }} />
-      </div>
+  if (!mounted) return null;
 
-      <div className="w-full max-w-sm relative">
-        {/* Logo */}
-        <div className="text-center mb-10">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl mb-4" style={{ background: "rgba(244,63,94,0.1)", border: "1px solid rgba(244,63,94,0.2)" }}>
-            <TrendingDown size={22} className="text-rose-400" />
-          </div>
-          <h1 className="text-xl font-bold tracking-tight">
-            Deep<span style={{ color: "#f43f5e" }}>Puts</span>
-          </h1>
-          <p className="text-sm mt-1" style={{ color: "var(--text-3)" }}>
+  return (
+    <div className="login-container">
+      <div className="login-bg-glow" />
+
+      <div className="login-card">
+        <button onClick={() => router.back()} className="login-close-button" aria-label="Go back" type="button">
+          <X size={18} />
+        </button>
+        
+        {/* Logo as a Link to allow returning to Dashboard */}
+        <div className="login-logo-container">
+          <Link href="/" style={{ textDecoration: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <div className="login-icon-box">
+              <TrendingDown size={22} />
+            </div>
+            <h1 className="login-logo-text">
+              Deep<span className="login-logo-highlight">Puts</span>
+            </h1>
+          </Link>
+          <p className="login-subtitle">
             {mode === "signup" ? "Create an account to get started" : "Sign in to vote, comment, and save theses"}
           </p>
         </div>
 
         {/* Toggle */}
-        <div className="flex rounded-xl p-1 mb-6" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+        <div className="login-tabs">
           {(["login", "signup"] as const).map((m) => (
             <button
               key={m}
               type="button"
               onClick={() => { setMode(m); setError(""); }}
-              className="flex-1 py-1.5 text-sm rounded-lg transition-all"
-              style={{
-                background: mode === m ? "rgba(255,255,255,0.08)" : "transparent",
-                color: mode === m ? "var(--text)" : "var(--text-3)",
-                fontWeight: mode === m ? 500 : 400,
-              }}
+              className={`login-tab ${mode === m ? "login-tab-active" : "login-tab-inactive"}`}
             >
               {m === "login" ? "Sign In" : "Sign Up"}
             </button>
@@ -83,69 +92,60 @@ export default function LoginPage() {
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="rounded-xl p-5 space-y-4" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+        <form onSubmit={handleSubmit}>
+          <div className="login-form-box">
             {mode === "signup" && (
-              <div>
-                <label className="block text-xs font-medium mb-2" style={{ color: "var(--text-2)" }}>Username</label>
+              <div className="login-form-group">
+                <label className="login-label">Username</label>
                 <input
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Choose a username"
                   required={mode === "signup"}
-                  className="w-full text-sm px-3 py-2 rounded-lg transition-colors"
-                  style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--text)" }}
-                  onFocus={e => (e.target.style.borderColor = "rgba(244,63,94,0.4)")}
-                  onBlur={e => (e.target.style.borderColor = "var(--border)")}
+                  className="login-input"
                 />
               </div>
             )}
 
-            <div>
-              <label className="block text-xs font-medium mb-2" style={{ color: "var(--text-2)" }}>Email</label>
+            <div className="login-form-group">
+              <label className="login-label">Email</label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 placeholder="you@example.com"
-                className="w-full text-sm px-3 py-2 rounded-lg transition-colors"
-                style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--text)" }}
-                onFocus={e => (e.target.style.borderColor = "rgba(244,63,94,0.4)")}
-                onBlur={e => (e.target.style.borderColor = "var(--border)")}
+                className="login-input"
               />
             </div>
 
-            <div>
-              <label className="block text-xs font-medium mb-2" style={{ color: "var(--text-2)" }}>Password</label>
+            <div className="login-form-group">
+              <label className="login-label">Password</label>
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 placeholder="••••••••"
-                className="w-full text-sm px-3 py-2 rounded-lg transition-colors"
-                style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--text)" }}
-                onFocus={e => (e.target.style.borderColor = "rgba(244,63,94,0.4)")}
-                onBlur={e => (e.target.style.borderColor = "var(--border)")}
+                className="login-input"
               />
               {mode === "signup" && (
-                <p className="text-xs mt-1.5" style={{ color: "var(--text-3)" }}>Minimum 8 characters</p>
+                <p className="login-hint">Minimum 8 characters</p>
               )}
             </div>
           </div>
 
           {mode === "signup" && (
-            <p className="text-xs leading-relaxed px-1" style={{ color: "#555" }}>
+            <p className="login-tos">
               By creating an account you agree to our{" "}
-              <a href="/tos" target="_blank" rel="noopener noreferrer" style={{ color: "#888" }}>Terms of Service</a>{" "}
+              <Link href="/tos">Terms of Service</Link>{" "}
               and acknowledge that DeepPuts provides AI-generated analysis for informational purposes only — not investment advice.
             </p>
           )}
 
           {error && (
-            <div className="rounded-lg px-4 py-3 text-xs" style={{ background: "rgba(244,63,94,0.08)", border: "1px solid rgba(244,63,94,0.2)", color: "#f87171" }}>
+            <div className="login-error">
               {error}
             </div>
           )}
@@ -153,29 +153,20 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-2.5 text-sm font-medium rounded-xl transition-all"
-            style={{ background: loading ? "rgba(244,63,94,0.5)" : "#f43f5e", color: "#fff", cursor: loading ? "not-allowed" : "pointer" }}
-            onMouseEnter={e => { if (!loading) e.currentTarget.style.background = "#fb4f6b"; }}
-            onMouseLeave={e => { if (!loading) e.currentTarget.style.background = "#f43f5e"; }}
+            className="login-submit"
           >
             {loading ? (mode === "signup" ? "Creating account…" : "Signing in…") : (mode === "signup" ? "Create Account" : "Sign In")}
           </button>
         </form>
 
         {/* Footer links */}
-        <div className="mt-8 text-center space-y-2">
-          <div className="flex items-center justify-center gap-3 text-xs" style={{ color: "#444" }}>
-            <a href="/tos" target="_blank" rel="noopener noreferrer" style={{ color: "#444" }}
-              onMouseEnter={e => (e.currentTarget.style.color = "#888")}
-              onMouseLeave={e => (e.currentTarget.style.color = "#444")}
-            >Terms of Service</a>
+        <div className="login-footer">
+          <div className="login-footer-links">
+            <Link href="/tos" className="login-footer-link">Terms of Service</Link>
             <span>·</span>
-            <a href="/privacy" target="_blank" rel="noopener noreferrer" style={{ color: "#444" }}
-              onMouseEnter={e => (e.currentTarget.style.color = "#888")}
-              onMouseLeave={e => (e.currentTarget.style.color = "#444")}
-            >Privacy Policy</a>
+            <Link href="/privacy" className="login-footer-link">Privacy Policy</Link>
           </div>
-          <p className="text-xs" style={{ color: "#333" }}>
+          <p className="login-footer-disclaimer">
             Not financial advice. For informational purposes only.
           </p>
         </div>

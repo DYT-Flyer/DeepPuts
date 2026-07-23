@@ -178,21 +178,7 @@ function OpportunityBoardInner() {
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-xl font-semibold tracking-tight" style={{ color: "var(--text)" }}>Bear Theses</h1>
-            {totalAnalyzed !== null && (
-              <p className="text-xs mt-0.5" style={{ color: "var(--text-3)" }}>
-                {totalAnalyzed.toLocaleString()} total analyses
-              </p>
-            )}
           </div>
-          <button onClick={triggerRefresh} disabled={refreshing}
-            className="flex items-center gap-2 text-sm px-4 py-2 rounded-lg transition-all"
-            style={{ background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text-2)", cursor: refreshing ? "not-allowed" : "pointer", opacity: refreshing ? 0.5 : 1 }}
-            onMouseEnter={e => { if (!refreshing) e.currentTarget.style.borderColor = "var(--border-hover)"; }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--border)"; }}
-          >
-            <RefreshCw size={13} className={refreshing ? "animate-spin" : ""} />
-            {refreshing ? "Refreshing…" : "Refresh"}
-          </button>
         </div>
 
         {/* Sort + Filters */}
@@ -357,7 +343,6 @@ function OpportunityBoardInner() {
                 <div className="flex items-center gap-3 mb-3">
                   <h2 className="text-xs font-semibold uppercase tracking-widest" style={{ color: "#f43f5e" }}>High Conviction</h2>
                   <div className="flex-1 h-px" style={{ background: "rgba(244,63,94,0.15)" }} />
-                  <span className="text-xs" style={{ color: "var(--text-3)" }}>{highConviction.length}</span>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
                   {highConviction.map(item => <OpportunityCard key={item.id} item={item} loggedIn={!!session} />)}
@@ -371,7 +356,6 @@ function OpportunityBoardInner() {
                     {sortBy === "votes" ? "Top Voted" : sortBy === "recent" ? "Most Recent" : sortBy === "composite" ? "Composite Score" : "Monitoring"}
                   </h2>
                   <div className="flex-1 h-px" style={{ background: "var(--border)" }} />
-                  <span className="text-xs" style={{ color: "var(--text-3)" }}>{rest.length}</span>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
                   {rest.map(item => <OpportunityCard key={item.id} item={item} loggedIn={!!session} />)}

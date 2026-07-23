@@ -15,18 +15,18 @@ export async function GET(req: NextRequest) {
   const minScore = parseInt(searchParams.get("minScore") || "1", 10);
   const limit = parseInt(searchParams.get("limit") || "50", 10);
   const offset = parseInt(searchParams.get("offset") || "0", 10);
-  const sortBy = searchParams.get("sortBy") || "score"; // "score" | "votes" | "recent" | "composite"
-  const needsClientSort = sortBy === "votes" || sortBy === "composite";
+  const sortBy = searchParams.get("sortBy") || "score"; // "score" | "votes" | "recent" | "composite" | "popular"
+  const needsClientSort = sortBy === "votes" || sortBy === "composite" || sortBy === "popular";
 
   const analyses = await prisma.analysis.findMany({
     where: {
       convictionScore: { gte: minScore },
       ...(sector ? { sector } : {}),
       ...(signalType ? { signalType } : {}),
-      ...(assetClass ? { rawEvent: { assetClass } } : {}),
+      ...(assetClass ? { canonicalEvent: { assetClass } } : {}),
     },
     include: {
-      rawEvent: true,
+      canonicalEvent: { include: { rawEvents: { take: 1, select: { rawJson: true } } } },
       _count: { select: { comments: true } },
       votes: true,
     },
@@ -67,13 +67,15 @@ export async function GET(req: NextRequest) {
       userVote,
       compositeScore,
       event: {
-        id: a.rawEvent.id,
-        headline: a.rawEvent.headline,
-        summary: a.rawEvent.summary,
-        publishedAt: a.rawEvent.publishedAt.toISOString(),
-        assetClass: a.rawEvent.assetClass as "stock" | "crypto",
-        source: a.rawEvent.source,
-        articleUrl: (JSON.parse(a.rawEvent.rawJson) as { article_url?: string }).article_url ?? null,
+        id: a.canonicalEvent.id,
+        headline: a.canonicalEvent.primaryHeadline,
+        summary: a.canonicalEvent.summary,
+        publishedAt: a.canonicalEvent.firstSeenAt.toISOString(),
+        assetClass: a.canonicalEvent.assetClass as "stock" | "crypto",
+        source: "polygon_news",
+        articleUrl: a.canonicalEvent.rawEvents?.[0]?.rawJson
+          ? (JSON.parse(a.canonicalEvent.rawEvents[0].rawJson) as { article_url?: string }).article_url ?? null
+          : null,
       },
     };
   });
@@ -82,6 +84,12 @@ export async function GET(req: NextRequest) {
     items.sort((a, b) => b.voteScore - a.voteScore || b.convictionScore - a.convictionScore);
   } else if (sortBy === "composite") {
     items.sort((a, b) => (b.compositeScore ?? 0) - (a.compositeScore ?? 0));
+  } else if (sortBy === "popular") {
+    items.sort((a, b) => {
+      const popA = a.voteScore + (a.commentCount * 2);
+      const popB = b.voteScore + (b.commentCount * 2);
+      return popB - popA || b.convictionScore - a.convictionScore;
+    });
   }
 
   if (needsClientSort) {

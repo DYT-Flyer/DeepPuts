@@ -21,7 +21,17 @@ interface SchedulerRun {
 
 interface AdminData {
   runs: SchedulerRun[];
-  stats: { totalEvents: number; totalAnalyzed: number; pendingAnalysis: number };
+  stats: { 
+    totalEvents: number; 
+    totalAnalyzed: number; 
+    pendingAnalysis: number;
+    highConviction: number;
+    events24h: number;
+    analyzed24h: number;
+    highConviction24h: number;
+  };
+  signalBreakdown: Array<{ type: string; count: number }>;
+  assetBreakdown: Array<{ assetClass: string; count: number }>;
 }
 
 interface ModerationFlag {
@@ -55,7 +65,10 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (status === "unauthenticated") router.replace("/login");
-  }, [status, router]);
+    if (status === "authenticated" && (session?.user as any)?.role !== "admin") {
+      router.replace("/");
+    }
+  }, [status, session, router]);
 
   async function load() {
     setLoading(true);
@@ -224,19 +237,55 @@ export default function AdminPage() {
           </div>
         ) : (
           <>
-        <div className="grid grid-cols-3 gap-4 mb-8">
-          {[
-            { label: "Total Events",    value: data?.stats.totalEvents    ?? "—" },
-            { label: "Analyzed",        value: data?.stats.totalAnalyzed  ?? "—" },
-            { label: "Pending Analysis",value: data?.stats.pendingAnalysis ?? "—", highlight: true },
-          ].map(s => (
-            <div key={s.label} className="rounded-xl p-4"
-              style={{ background: s.highlight ? "rgba(244,63,94,0.05)" : "var(--surface)", border: `1px solid ${s.highlight ? "rgba(244,63,94,0.2)" : "var(--border)"}` }}
-            >
-              <p className="text-xs" style={{ color: "var(--text-3)" }}>{s.label}</p>
-              <p className="text-2xl font-bold font-mono mt-1" style={{ color: s.highlight ? "#f43f5e" : "var(--text)" }}>{s.value}</p>
+        <div className="grid grid-cols-2 gap-6 mb-8">
+          <div>
+            <h2 className="text-xs font-semibold uppercase tracking-widest mb-4" style={{ color: "var(--text-3)" }}>Stats</h2>
+            <div className="space-y-2">
+              {[
+                { label: "Events Ingested", value: data?.stats.totalEvents ?? 0, sub: "total" },
+                { label: "AI Analyzed", value: data?.stats.totalAnalyzed ?? 0, sub: "bear theses" },
+                { label: "High Conviction", value: data?.stats.highConviction ?? 0, sub: "score ≥ 7", highlight: true },
+                { label: "Pending", value: data?.stats.pendingAnalysis ?? 0, sub: "in queue" },
+              ].map(s => (
+                <div key={s.label} className="flex items-center justify-between px-3 py-2.5 rounded-lg"
+                  style={{ background: s.highlight ? "rgba(244,63,94,0.06)" : "var(--surface)", border: `1px solid ${s.highlight ? "rgba(244,63,94,0.2)" : "var(--border)"}` }}
+                >
+                  <div>
+                    <p className="text-xs font-medium" style={{ color: s.highlight ? "#f43f5e" : "var(--text-2)" }}>{s.label}</p>
+                    <p className="text-xs" style={{ color: "var(--text-3)" }}>{s.sub}</p>
+                  </div>
+                  <p className="text-xl font-bold font-mono" style={{ color: s.highlight ? "#f43f5e" : "var(--text)" }}>
+                    {loading ? "—" : s.value}
+                  </p>
+                </div>
+              ))}
             </div>
-          ))}
+          </div>
+          <div>
+            <h2 className="text-xs font-semibold uppercase tracking-widest mb-4" style={{ color: "var(--text-3)" }}>Signal Breakdown</h2>
+            <div className="rounded-xl p-3 space-y-2.5" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+              {loading ? (
+                Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="h-5 rounded animate-pulse" style={{ background: "var(--surface-2)" }} />
+                ))
+              ) : !data?.signalBreakdown?.length ? (
+                <p className="text-xs text-center py-2" style={{ color: "var(--text-3)" }}>No data yet</p>
+              ) : (() => {
+                const total = data.signalBreakdown.reduce((s, b) => s + b.count, 0);
+                return data.signalBreakdown.map((b) => (
+                  <div key={b.type} className="flex items-center gap-2">
+                    <div className="w-20 truncate">
+                      <span className="text-xs font-medium capitalize" style={{ color: "var(--text-2)" }}>{b.type.replace(/_/g, " ")}</span>
+                    </div>
+                    <div className="flex-1 h-1 rounded-full overflow-hidden" style={{ background: "var(--surface-2)" }}>
+                      <div className="h-full rounded-full" style={{ width: `${(b.count / total) * 100}%`, background: "rgba(255,255,255,0.15)" }} />
+                    </div>
+                    <span className="text-xs font-mono w-4 text-right" style={{ color: "var(--text-3)" }}>{b.count}</span>
+                  </div>
+                ));
+              })()}
+            </div>
+          </div>
         </div>
 
         {/* Trigger */}
@@ -271,6 +320,23 @@ export default function AdminPage() {
             Full run fetches events from Polygon.io and runs Claude on unanalyzed events.
             Dry run simulates without writing to the database.
           </p>
+        </div>
+
+        {/* Asset Coverage */}
+        <div className="rounded-xl p-5 mb-6" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+          <h2 className="text-xs font-semibold uppercase tracking-widest mb-4" style={{ color: "var(--text-3)" }}>Asset Coverage</h2>
+          {!data?.assetBreakdown?.length ? (
+            <p className="text-xs text-center py-2" style={{ color: "var(--text-3)" }}>No asset coverage data yet</p>
+          ) : (
+            <div className="flex gap-4">
+              {data.assetBreakdown.map((a) => (
+                <div key={a.assetClass} className="flex-1 rounded-xl p-4 text-center" style={{ background: "var(--surface-2)", border: "1px solid var(--border)" }}>
+                  <p className="text-3xl font-bold font-mono" style={{ color: "var(--text)" }}>{a.count}</p>
+                  <p className="text-sm capitalize mt-1" style={{ color: "var(--text-3)" }}>{a.assetClass}</p>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Run history */}

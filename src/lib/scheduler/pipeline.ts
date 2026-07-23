@@ -1,7 +1,10 @@
 import prisma from "@/lib/prisma";
 import { fetchStockNews, fetchCryptoNews } from "@/lib/polygon/news";
 import { detectAnomalies } from "@/lib/polygon/aggregates";
-import { analyzeEvent, PROMPT_VERSION } from "@/lib/claude/analyze";
+import { analyzeEvent, PROMPT_VERSION, GEMINI_MODEL } from "@/lib/gemini/analyze";
+import { IngestionService } from "@/domain/ingestion/service";
+import { DeduplicationService } from "@/domain/resolution/service";
+import { AnalysisOrchestrator } from "@/domain/analysis/pipeline";
 import type { PrismaClient } from "@prisma/client";
 
 const ANALYSIS_DELAY_MS = 2000; // 2s between Claude calls
@@ -44,35 +47,45 @@ export async function runRefreshCycle(db: PrismaClient = prisma): Promise<void> 
 
     console.log(`[scheduler] Fetched ${stockArticles.length} stock articles, ${cryptoArticles.length} crypto articles, ${priceAnomalies.length} anomalies`);
 
+    const ingestionService = new IngestionService(db);
+    const deduplicationService = new DeduplicationService(db);
+    const ingestionRunId = await ingestionService.startRun("polygon");
+
     // --- Store raw events ---
-    const newEvents: Array<{ id: string; headline: string; summary: string | null; tickers: string[]; publishedAt: Date; assetClass: string }> = [];
+    const canonicalEventIdsToAnalyze = new Set<string>();
 
     // Stock news
     for (const article of stockArticles) {
+      const tickerList = article.tickers.length ? ` [${article.tickers.join(", ")}]` : "";
+      console.log(`[scheduler] Article (Stock)${tickerList}: "${article.title}"`);
       try {
-        const existing = await db.rawEvent.findUnique({ where: { externalId: article.id } });
-        if (existing) continue;
-
-        const event = await db.rawEvent.create({
-          data: {
-            source: "polygon_news",
-            assetClass: "stock",
-            externalId: article.id,
-            tickers: JSON.stringify(article.tickers),
-            headline: article.title,
-            summary: article.description,
-            publishedAt: new Date(article.published_utc),
-            rawJson: JSON.stringify(article),
-          },
-        });
-        newEvents.push({
-          id: event.id,
-          headline: event.headline,
-          summary: event.summary,
+        const ingested = await ingestionService.ingestEvent({
+          provider: "polygon",
+          source: "polygon_news",
+          assetClass: "stock",
+          externalId: article.id,
           tickers: article.tickers,
-          publishedAt: event.publishedAt,
-          assetClass: event.assetClass,
-        });
+          headline: article.title,
+          summary: article.description,
+          publishedAt: new Date(article.published_utc),
+          rawJson: JSON.stringify(article),
+        }, ingestionRunId);
+
+        if (ingested.status === "duplicate") {
+          console.log(`   ↳ Duplicate event (skipping)`);
+          continue;
+        } else if (ingested.status === "quarantined") {
+          console.log(`   ↳ Quarantined payload: ${ingested.quarantineReason}`);
+          continue;
+        }
+
+        const canonical = await deduplicationService.resolveCanonicalEvent(ingested.id);
+        const matchLabel = canonical.isNewCanonical ? "NEW Canonical Event" : `Merged into Canonical Cluster ${canonical.canonicalEventId}`;
+        console.log(`   ↳ ${matchLabel} (Members: ${canonical.totalMembers}, Match: ${canonical.matchType})`);
+
+        if (canonical.isNewCanonical) {
+          canonicalEventIdsToAnalyze.add(canonical.canonicalEventId);
+        }
         eventsFound++;
       } catch (err) {
         errors.push(`Store stock event: ${(err as Error).message}`);
@@ -81,30 +94,36 @@ export async function runRefreshCycle(db: PrismaClient = prisma): Promise<void> 
 
     // Crypto news
     for (const article of cryptoArticles) {
+      const tickerList = article.tickers.length ? ` [${article.tickers.join(", ")}]` : "";
+      console.log(`[scheduler] Article (Crypto)${tickerList}: "${article.title}"`);
       try {
-        const existing = await db.rawEvent.findUnique({ where: { externalId: article.id } });
-        if (existing) continue;
-
-        const event = await db.rawEvent.create({
-          data: {
-            source: "polygon_news",
-            assetClass: "crypto",
-            externalId: article.id,
-            tickers: JSON.stringify(article.tickers),
-            headline: article.title,
-            summary: article.description,
-            publishedAt: new Date(article.published_utc),
-            rawJson: JSON.stringify(article),
-          },
-        });
-        newEvents.push({
-          id: event.id,
-          headline: event.headline,
-          summary: event.summary,
+        const ingested = await ingestionService.ingestEvent({
+          provider: "polygon",
+          source: "polygon_news",
+          assetClass: "crypto",
+          externalId: article.id,
           tickers: article.tickers,
-          publishedAt: event.publishedAt,
-          assetClass: event.assetClass,
-        });
+          headline: article.title,
+          summary: article.description,
+          publishedAt: new Date(article.published_utc),
+          rawJson: JSON.stringify(article),
+        }, ingestionRunId);
+
+        if (ingested.status === "duplicate") {
+          console.log(`   ↳ Duplicate event (skipping)`);
+          continue;
+        } else if (ingested.status === "quarantined") {
+          console.log(`   ↳ Quarantined payload: ${ingested.quarantineReason}`);
+          continue;
+        }
+
+        const canonical = await deduplicationService.resolveCanonicalEvent(ingested.id);
+        const matchLabel = canonical.isNewCanonical ? "NEW Canonical Event" : `Merged into Canonical Cluster ${canonical.canonicalEventId}`;
+        console.log(`   ↳ ${matchLabel} (Members: ${canonical.totalMembers}, Match: ${canonical.matchType})`);
+
+        if (canonical.isNewCanonical) {
+          canonicalEventIdsToAnalyze.add(canonical.canonicalEventId);
+        }
         eventsFound++;
       } catch (err) {
         errors.push(`Store crypto event: ${(err as Error).message}`);
@@ -113,94 +132,60 @@ export async function runRefreshCycle(db: PrismaClient = prisma): Promise<void> 
 
     // Price anomalies as events
     for (const anomaly of priceAnomalies) {
+      const headline = `${anomaly.symbol} dropped ${Math.abs(anomaly.pctChange).toFixed(1)}% with ${anomaly.volumeMultiple.toFixed(1)}x average volume`;
+      console.log(`[scheduler] Anomaly (${anomaly.symbol}): "${headline}"`);
       try {
         const externalId = `anomaly-${anomaly.symbol}-${anomaly.date.split("T")[0]}`;
-        const existing = await db.rawEvent.findUnique({ where: { externalId } });
-        if (existing) continue;
-
-        const headline = `${anomaly.symbol} dropped ${Math.abs(anomaly.pctChange).toFixed(1)}% with ${anomaly.volumeMultiple.toFixed(1)}x average volume`;
-        const event = await db.rawEvent.create({
-          data: {
-            source: "polygon_anomaly",
-            assetClass: anomaly.assetClass,
-            externalId,
-            tickers: JSON.stringify([anomaly.symbol.replace("/USD", "")]),
-            headline,
-            summary: `Price anomaly detected: ${anomaly.symbol} experienced an unusual ${anomaly.pctChange.toFixed(1)}% price move with volume ${anomaly.volumeMultiple.toFixed(1)}x above the 30-day average. Current price: $${anomaly.currentPrice.toFixed(2)}.`,
-            publishedAt: new Date(anomaly.date),
-            rawJson: JSON.stringify(anomaly),
-          },
-        });
-        newEvents.push({
-          id: event.id,
-          headline: event.headline,
-          summary: event.summary,
+        const ingested = await ingestionService.ingestEvent({
+          provider: "polygon",
+          source: "polygon_anomaly",
+          assetClass: anomaly.assetClass,
+          externalId,
           tickers: [anomaly.symbol.replace("/USD", "")],
-          publishedAt: event.publishedAt,
-          assetClass: event.assetClass,
-        });
+          headline,
+          summary: `Price anomaly detected: ${anomaly.symbol} experienced an unusual ${anomaly.pctChange.toFixed(1)}% price move with volume ${anomaly.volumeMultiple.toFixed(1)}x above the 30-day average. Current price: $${anomaly.currentPrice.toFixed(2)}.`,
+          publishedAt: new Date(anomaly.date),
+          rawJson: JSON.stringify(anomaly),
+        }, ingestionRunId);
+
+        if (ingested.status === "duplicate") {
+          console.log(`   ↳ Duplicate event (skipping)`);
+          continue;
+        } else if (ingested.status === "quarantined") {
+          console.log(`   ↳ Quarantined anomaly payload: ${ingested.quarantineReason}`);
+          continue;
+        }
+
+        const canonical = await deduplicationService.resolveCanonicalEvent(ingested.id);
+        const matchLabel = canonical.isNewCanonical ? "NEW Canonical Event" : `Merged into Canonical Cluster ${canonical.canonicalEventId}`;
+        console.log(`   ↳ ${matchLabel} (Members: ${canonical.totalMembers}, Match: ${canonical.matchType})`);
+        
+        if (canonical.isNewCanonical) {
+          canonicalEventIdsToAnalyze.add(canonical.canonicalEventId);
+        }
         eventsFound++;
       } catch (err) {
         errors.push(`Store anomaly event: ${(err as Error).message}`);
       }
     }
 
-    console.log(`[scheduler] Stored ${eventsFound} new events, now analyzing...`);
+    await ingestionService.finishRun(ingestionRunId, errors.length > 0 ? "partial" : "success");
 
-    let totalClaudeCost = 0;
+    console.log(`[scheduler] Stored ${eventsFound} events, now analyzing ${canonicalEventIdsToAnalyze.size} new canonical events...`);
 
-    // --- Analyze new events with Claude ---
-    for (const event of newEvents) {
+    const analysisOrchestrator = new AnalysisOrchestrator(db);
+
+    // --- Analyze new events with Gemini ---
+    for (const canonicalId of canonicalEventIdsToAnalyze) {
       try {
-        const { result, usage } = await analyzeEvent({
-          assetClass: event.assetClass as "stock" | "crypto",
-          headline: event.headline,
-          summary: event.summary,
-          tickers: event.tickers,
-          publishedAt: event.publishedAt.toISOString(),
-        });
-
-        totalClaudeCost += usage.estimatedCostUsd;
-
-        // Log API usage
-        await db.apiUsageLog.create({
-          data: {
-            provider: "anthropic",
-            endpoint: "messages",
-            costUsd: usage.estimatedCostUsd,
-            tokens: usage.inputTokens + usage.outputTokens,
-            latencyMs: usage.latencyMs,
-            success: result.convictionScore > 1 || result.bearThesis !== "Analysis could not be completed.",
-          },
-        }).catch(() => {}); // non-fatal
-
-        await db.analysis.create({
-          data: {
-            rawEventId: event.id,
-            bearThesis: result.bearThesis,
-            convictionScore: result.convictionScore,
-            signalType: result.signalType,
-            affectedTickers: JSON.stringify(result.affectedTickers),
-            sector: result.sector,
-            catalystDate: result.catalystDate ? new Date(result.catalystDate) : null,
-            analysisJson: JSON.stringify(result),
-            promptVersion: PROMPT_VERSION,
-            modelName: "claude-opus-4-6",
-            ...(result.keyRisks        ? { keyRisks: JSON.stringify(result.keyRisks) }           : {}),
-            ...(result.counterArgs     ? { counterArgs: JSON.stringify(result.counterArgs) }     : {}),
-            ...(result.confidenceLabel ? { confidenceLabel: result.confidenceLabel }             : {}),
-            ...(result.timeHorizon     ? { timeHorizon: result.timeHorizon }                     : {}),
-            ...(result.severity        ? { severity: result.severity }                           : {}),
-            ...(result.sourceQuality   ? { sourceQuality: result.sourceQuality }                 : {}),
-            ...(result.industry        ? { industry: result.industry }                           : {}),
-          },
-        });
-
-        eventsAnalyzed++;
-        console.log(`[scheduler] Analyzed: "${event.headline.slice(0, 60)}..." → score ${result.convictionScore}`);
+        const runId = await analysisOrchestrator.analyzeCanonicalEvent(canonicalId);
+        if (runId) {
+          eventsAnalyzed++;
+          console.log(`[scheduler] Analyzed canonical event ${canonicalId}`);
+        }
         await sleep(ANALYSIS_DELAY_MS);
       } catch (err) {
-        errors.push(`Analyze event ${event.id}: ${(err as Error).message}`);
+        errors.push(`Analyze canonical ${canonicalId}: ${(err as Error).message}`);
       }
     }
 
@@ -212,7 +197,7 @@ export async function runRefreshCycle(db: PrismaClient = prisma): Promise<void> 
         finishedAt: new Date(),
         eventsFound,
         eventsAnalyzed,
-        claudeCost: totalClaudeCost > 0 ? totalClaudeCost : null,
+        claudeCost: null,
         errorMessage: errors.length > 0 ? errors.slice(0, 5).join("; ") : null,
       },
     });

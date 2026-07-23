@@ -14,7 +14,7 @@ export async function GET() {
       include: {
         comments: {
           include: {
-            analysis: { include: { rawEvent: true } },
+            analysis: { include: { canonicalEvent: true } },
           },
           orderBy: { createdAt: "desc" },
           take: 20,
@@ -39,7 +39,7 @@ export async function GET() {
       analysis: {
         id: c.analysis.id,
         convictionScore: c.analysis.convictionScore,
-        headline: c.analysis.rawEvent.headline,
+        headline: c.analysis.canonicalEvent.primaryHeadline,
       },
     })),
   });

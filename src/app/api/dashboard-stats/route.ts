@@ -14,10 +14,7 @@ export async function GET() {
     events24h,
     analyzed24h,
     highConviction24h,
-    lastRun,
     recentTop,
-    signalBreakdown,
-    assetBreakdown,
   ] = await Promise.all([
     prisma.rawEvent.count(),
     prisma.analysis.count(),
@@ -25,22 +22,14 @@ export async function GET() {
     prisma.rawEvent.count({ where: { publishedAt: { gte: since24h } } }),
     prisma.analysis.count({ where: { createdAt: { gte: since24h } } }),
     prisma.analysis.count({ where: { createdAt: { gte: since24h }, convictionScore: { gte: 7 } } }),
-    prisma.schedulerRun.findFirst({ orderBy: { startedAt: "desc" } }),
     prisma.analysis.findMany({
       where: { convictionScore: { gte: 7 } },
-      include: { rawEvent: true, _count: { select: { comments: true } } },
-      orderBy: [{ convictionScore: "desc" }, { createdAt: "desc" }],
+      include: { 
+        canonicalEvent: { include: { rawEvents: { take: 1, select: { rawJson: true } } } }, 
+        _count: { select: { comments: true } } 
+      },
+      orderBy: [{ canonicalEvent: { firstSeenAt: "desc" } }, { convictionScore: "desc" }],
       take: 5,
-    }),
-    prisma.analysis.groupBy({
-      by: ["signalType"],
-      _count: { signalType: true },
-      orderBy: { _count: { signalType: "desc" } },
-      take: 6,
-    }),
-    prisma.rawEvent.groupBy({
-      by: ["assetClass"],
-      _count: { assetClass: true },
     }),
   ]);
 
@@ -83,16 +72,6 @@ export async function GET() {
       analyzed24h,
       highConviction24h,
     },
-    lastRun: lastRun
-      ? {
-          status: lastRun.status,
-          startedAt: lastRun.startedAt.toISOString(),
-          finishedAt: lastRun.finishedAt?.toISOString() || null,
-          eventsFound: lastRun.eventsFound,
-          eventsAnalyzed: lastRun.eventsAnalyzed,
-          errorMessage: lastRun.errorMessage,
-        }
-      : null,
     recentTop: recentTop.map((a) => ({
       id: a.id,
       convictionScore: a.convictionScore,
@@ -106,19 +85,13 @@ export async function GET() {
       voteScore: voteMap.get(a.id) ?? 0,
       userVote: (userVoteMap.get(a.id) ?? 0) as 1 | -1 | 0,
       event: {
-        headline: a.rawEvent.headline,
-        publishedAt: a.rawEvent.publishedAt.toISOString(),
-        assetClass: a.rawEvent.assetClass,
-        articleUrl: (JSON.parse(a.rawEvent.rawJson) as { article_url?: string }).article_url ?? null,
+        headline: a.canonicalEvent.primaryHeadline,
+        publishedAt: a.canonicalEvent.firstSeenAt.toISOString(),
+        assetClass: a.canonicalEvent.assetClass,
+        articleUrl: a.canonicalEvent.rawEvents?.[0]?.rawJson
+          ? (JSON.parse(a.canonicalEvent.rawEvents[0].rawJson) as { article_url?: string }).article_url ?? null
+          : null,
       },
-    })),
-    signalBreakdown: signalBreakdown.map((s) => ({
-      type: s.signalType,
-      count: s._count.signalType,
-    })),
-    assetBreakdown: assetBreakdown.map((a) => ({
-      assetClass: a.assetClass,
-      count: a._count.assetClass,
     })),
     trendingTickers,
   });

@@ -13,13 +13,13 @@ export async function GET(req: NextRequest) {
 
   const events = await prisma.rawEvent.findMany({
     where: assetClass ? { assetClass } : undefined,
-    include: { analysis: true },
+    include: { canonicalEvent: { include: { analysis: true } } },
     orderBy: { publishedAt: "desc" },
     take: Math.min(limit, 100),
     skip: offset,
   });
 
-  const analysisIds = events.flatMap((e) => (e.analysis ? [e.analysis.id] : []));
+  const analysisIds = events.flatMap((e) => (e.canonicalEvent?.analysis ? [e.canonicalEvent?.analysis.id] : []));
   const [voteSums, userVotes] = await Promise.all([
     analysisIds.length
       ? prisma.vote.groupBy({ by: ["analysisId"], where: { analysisId: { in: analysisIds } }, _sum: { value: true } })
@@ -39,15 +39,15 @@ export async function GET(req: NextRequest) {
     assetClass: e.assetClass as "stock" | "crypto",
     tickers: JSON.parse(e.tickers) as string[],
     articleUrl: (JSON.parse(e.rawJson) as { article_url?: string }).article_url ?? null,
-    analysis: e.analysis
+    analysis: e.canonicalEvent?.analysis
       ? {
-          id: e.analysis.id,
-          convictionScore: e.analysis.convictionScore,
-          signalType: e.analysis.signalType as SignalType,
-          bearThesis: e.analysis.bearThesis,
-          affectedTickers: JSON.parse(e.analysis.affectedTickers) as string[],
-          voteScore: voteMap.get(e.analysis.id) ?? 0,
-          userVote: (userVoteMap.get(e.analysis.id) ?? 0) as 1 | -1 | 0,
+          id: e.canonicalEvent?.analysis.id,
+          convictionScore: e.canonicalEvent?.analysis.convictionScore,
+          signalType: e.canonicalEvent?.analysis.signalType as SignalType,
+          bearThesis: e.canonicalEvent?.analysis.bearThesis,
+          affectedTickers: JSON.parse(e.canonicalEvent?.analysis.affectedTickers) as string[],
+          voteScore: voteMap.get(e.canonicalEvent?.analysis.id) ?? 0,
+          userVote: (userVoteMap.get(e.canonicalEvent?.analysis.id) ?? 0) as 1 | -1 | 0,
         }
       : null,
   }));

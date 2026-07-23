@@ -18,7 +18,7 @@ export async function GET(req: NextRequest) {
       ...(excludeId ? { id: { not: excludeId } } : {}),
       convictionScore: { gte: 5 },
     },
-    include: { rawEvent: true, _count: { select: { comments: true } } },
+    include: { canonicalEvent: true, _count: { select: { comments: true } } },
     orderBy: [{ convictionScore: "desc" }, { createdAt: "desc" }],
     take: limit,
   });
@@ -49,10 +49,10 @@ export async function GET(req: NextRequest) {
       voteScore: voteMap.get(a.id) ?? 0,
       userVote: (userVoteMap.get(a.id) ?? 0) as 1 | -1 | 0,
       event: {
-        headline: a.rawEvent.headline,
-        publishedAt: a.rawEvent.publishedAt.toISOString(),
-        assetClass: a.rawEvent.assetClass,
-        articleUrl: (JSON.parse(a.rawEvent.rawJson) as { article_url?: string }).article_url ?? null,
+        headline: a.canonicalEvent.primaryHeadline,
+        publishedAt: a.canonicalEvent.firstSeenAt.toISOString(),
+        assetClass: a.canonicalEvent.assetClass,
+        articleUrl: null,
       },
     }))
   );

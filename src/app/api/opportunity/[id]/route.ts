@@ -12,7 +12,7 @@ export async function GET(
   const analysis = await prisma.analysis.findUnique({
     where: { id },
     include: {
-      rawEvent: true,
+      canonicalEvent: { include: { rawEvents: { take: 1, select: { rawJson: true } } } },
       comments: {
         where: { parentId: null },
         include: {
@@ -75,12 +75,14 @@ export async function GET(
     promptVersion: a.promptVersion ?? null,
     modelName: a.modelName ?? null,
     event: {
-      headline: a.rawEvent.headline,
-      summary: a.rawEvent.summary,
-      publishedAt: a.rawEvent.publishedAt.toISOString(),
-      assetClass: a.rawEvent.assetClass,
-      source: a.rawEvent.source,
-      articleUrl: (JSON.parse(a.rawEvent.rawJson) as { article_url?: string }).article_url ?? null,
+      headline: a.canonicalEvent.primaryHeadline,
+      summary: a.canonicalEvent.summary,
+      publishedAt: a.canonicalEvent.firstSeenAt.toISOString(),
+      assetClass: a.canonicalEvent.assetClass,
+      source: "polygon_news",
+      articleUrl: a.canonicalEvent.rawEvents?.[0]?.rawJson
+        ? (JSON.parse(a.canonicalEvent.rawEvents[0].rawJson) as { article_url?: string }).article_url ?? null
+        : null,
     },
     comments: a.comments.map(serializeComment),
   });
