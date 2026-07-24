@@ -221,18 +221,18 @@ export default function OpportunityPage({ params }: { params: Promise<{ id: stri
 
               {/* Bear thesis */}
               <div className="rounded-lg p-4 mb-4" style={{ background: "rgba(244,63,94,0.04)", border: "1px solid rgba(244,63,94,0.12)" }}>
-                <p className="text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: "rgba(244,63,94,0.6)" }}>Bear Thesis</p>
-                <p className="text-sm leading-relaxed" style={{ color: "var(--text-2)" }}>{data.bearThesis}</p>
+                <p className="text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: "#f43f5e" }}>Bear Thesis</p>
+                <p className="text-sm leading-relaxed" style={{ color: "#fff" }}>{data.bearThesis}</p>
               </div>
 
               {/* Key risks */}
               {data.keyRisks && data.keyRisks.length > 0 && (
                 <div className="rounded-lg p-4 mb-4" style={{ background: "rgba(244,63,94,0.02)", border: "1px solid rgba(244,63,94,0.08)" }}>
-                  <p className="text-xs font-semibold uppercase tracking-widest mb-2.5" style={{ color: "rgba(244,63,94,0.5)" }}>Key Risks</p>
+                  <p className="text-xs font-semibold uppercase tracking-widest mb-2.5" style={{ color: "#f43f5e" }}>Key Risks</p>
                   <ul className="space-y-1.5">
                     {data.keyRisks.map((risk, i) => (
-                      <li key={i} className="text-sm leading-snug flex gap-2" style={{ color: "var(--text-2)" }}>
-                        <span style={{ color: "#f43f5e", opacity: 0.5, flexShrink: 0, marginTop: "1px" }}>▸</span>
+                      <li key={i} className="text-sm leading-snug flex gap-2" style={{ color: "#fff" }}>
+                        <span style={{ color: "#f43f5e", opacity: 1, flexShrink: 0, marginTop: "1px" }}>▸</span>
                         {risk}
                       </li>
                     ))}
@@ -242,7 +242,7 @@ export default function OpportunityPage({ params }: { params: Promise<{ id: stri
 
               {/* Summary */}
               {data.event.summary && (
-                <p className="text-sm leading-relaxed mb-4" style={{ color: "var(--text-3)" }}>{data.event.summary}</p>
+                <p className="text-sm leading-relaxed mb-4" style={{ color: "#d4d4d4" }}>{data.event.summary}</p>
               )}
 
               {/* Tags + Vote */}
@@ -293,11 +293,11 @@ export default function OpportunityPage({ params }: { params: Promise<{ id: stri
             {/* Counterarguments */}
             {data.counterArgs && data.counterArgs.length > 0 && (
               <div className="rounded-xl p-4" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
-                <p className="text-xs font-semibold uppercase tracking-widest mb-2.5" style={{ color: "var(--text-3)" }}>Bull Case / Counterarguments</p>
+                <p className="text-xs font-semibold uppercase tracking-widest mb-2.5" style={{ color: "#34d399" }}>Bull Case / Counterarguments</p>
                 <ul className="space-y-1.5">
                   {data.counterArgs.map((arg, i) => (
-                    <li key={i} className="text-sm leading-snug flex gap-2" style={{ color: "var(--text-3)" }}>
-                      <span style={{ color: "#34d399", opacity: 0.6, flexShrink: 0, marginTop: "1px" }}>▸</span>
+                    <li key={i} className="text-sm leading-snug flex gap-2" style={{ color: "#fff" }}>
+                      <span style={{ color: "#34d399", opacity: 1, flexShrink: 0, marginTop: "1px" }}>▸</span>
                       {arg}
                     </li>
                   ))}
