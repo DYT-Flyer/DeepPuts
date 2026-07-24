@@ -139,28 +139,28 @@ function DashboardRow({ item, loggedIn }: { item: DashboardTopItem; loggedIn: bo
         <div style={{ display: "flex", alignItems: "flex-start", gap: "10px", marginBottom: "4px" }}>
           <ConvictionBadge score={item.convictionScore} size="sm" />
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div className="flex items-center gap-3 w-full">
+            <div className="w-full truncate leading-snug">
               {item.event.articleUrl ? (
                 <>
                   <a href={item.event.articleUrl} target="_blank" rel="noopener noreferrer"
                     onClick={(e) => e.stopPropagation()}
-                    className="min-w-0 text-sm font-medium leading-snug truncate transition-colors hover:underline"
+                    className="text-sm font-medium transition-colors hover:underline"
                     style={{ color: "#fff" }}
                   >
                     {item.event.headline}
                   </a>
                   {getDomain(item.event.articleUrl) && (
-                    <span className="text-xs font-normal whitespace-nowrap shrink-0" style={{ color: "var(--text-3)" }}>
+                    <span className="text-xs font-normal whitespace-nowrap ml-1.5" style={{ color: "var(--text-3)" }}>
                       {getDomain(item.event.articleUrl)}
                     </span>
                   )}
                 </>
               ) : (
-                <p className="min-w-0 text-sm font-medium leading-snug truncate" style={{ color: "#fff" }}>
+                <span className="text-sm font-medium" style={{ color: "#fff" }}>
                   {item.event.headline}
-                </p>
+                </span>
               )}
-              <span className="text-xs whitespace-nowrap ml-auto shrink-0" style={{ color: "var(--text-3)" }}>
+              <span className="text-xs whitespace-nowrap ml-2" style={{ color: "var(--text-3)" }}>
                 {formatAge(item.event.publishedAt)}
               </span>
             </div>
