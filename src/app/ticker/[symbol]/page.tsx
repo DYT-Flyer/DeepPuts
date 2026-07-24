@@ -40,6 +40,26 @@ export default function TickerPage({ params }: { params: Promise<{ symbol: strin
       .then(d => { setWatching((d.symbols as string[]).includes(upper)); setWatchLoading(false); });
   }, [upper, session]);
 
+  useEffect(() => {
+    // Add current ticker to recent_tickers cookie
+    try {
+      const cookieStr = document.cookie.split("; ").find(row => row.startsWith("recent_tickers="));
+      let recent = cookieStr ? JSON.parse(decodeURIComponent(cookieStr.split("=")[1])) : [];
+      if (!Array.isArray(recent)) recent = [];
+      
+      // Remove if exists to push to front
+      recent = recent.filter((t: string) => t !== upper);
+      recent.unshift(upper);
+      
+      // Keep only last 5
+      recent = recent.slice(0, 5);
+      
+      document.cookie = `recent_tickers=${encodeURIComponent(JSON.stringify(recent))}; path=/; max-age=2592000; SameSite=Lax`;
+    } catch (e) {
+      console.error("Error setting recent tickers cookie", e);
+    }
+  }, [upper]);
+
   async function toggleWatch() {
     if (!session || watchLoading) return;
     setWatchLoading(true);

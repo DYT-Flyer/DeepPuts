@@ -19,6 +19,21 @@ export function Nav({ userEmail, userName }: Props) {
   const pathname = usePathname();
   const router = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [recentTickers, setRecentTickers] = useState<string[]>([]);
+
+  React.useEffect(() => {
+    try {
+      const cookieStr = document.cookie.split("; ").find(row => row.startsWith("recent_tickers="));
+      if (cookieStr) {
+        const recent = JSON.parse(decodeURIComponent(cookieStr.split("=")[1]));
+        if (Array.isArray(recent)) {
+          setRecentTickers(recent);
+        }
+      }
+    } catch (e) {
+      console.error("Failed to parse recent tickers", e);
+    }
+  }, [pathname]);
 
   return (
     <nav className="nav-container">
@@ -42,6 +57,17 @@ export function Nav({ userEmail, userName }: Props) {
           <span className="nav-separator">·</span>
           <NavLink href="/popular" active={pathname === "/popular"}>Popular</NavLink>
         </div>
+
+        {recentTickers.length > 0 && (
+          <div className="nav-recent-tickers desktop-only">
+            <span className="nav-recent-label">Recent:</span>
+            {recentTickers.map(ticker => (
+              <Link key={ticker} href={`/ticker/${ticker}`} className="nav-recent-pill">
+                {ticker}
+              </Link>
+            ))}
+          </div>
+        )}
 
         {/* Right Auth & Search */}
         <div className="nav-right">

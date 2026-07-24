@@ -1,28 +1,45 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import type { OpportunityItem } from "@/types";
 
 export async function GET(
-  _req: NextRequest,
+  _req: Request,
   { params }: { params: Promise<{ symbol: string }> }
 ) {
   const session = await auth();
   const userId = session?.user?.id;
 
-  const { symbol } = await params;
-  const upper = symbol.toUpperCase();
+  const resolvedParams = await params;
+  const upper = resolvedParams.symbol.toUpperCase();
 
   const analyses = await prisma.analysis.findMany({
     where: {
       affectedTickers: { contains: upper },
     },
-    include: { 
-      canonicalEvent: { include: { rawEvents: { take: 1, select: { rawJson: true } } } }, 
-      _count: { select: { comments: true } }, 
-      votes: true 
+    select: {
+      id: true,
+      bearThesis: true,
+      convictionScore: true,
+      signalType: true,
+      affectedTickers: true,
+      sector: true,
+      catalystDate: true,
+      createdAt: true,
+      canonicalEvent: { 
+        select: { 
+          id: true,
+          primaryHeadline: true, 
+          summary: true, 
+          firstSeenAt: true, 
+          assetClass: true,
+          rawEvents: { take: 1, select: { rawJson: true } } 
+        } 
+      },
+      _count: { select: { comments: true } },
+      votes: true
     },
-    orderBy: [{ canonicalEvent: { firstSeenAt: "desc" } }, { convictionScore: "desc" }],
+    orderBy: [{ createdAt: "desc" }, { convictionScore: "desc" }],
     take: 50,
   });
 

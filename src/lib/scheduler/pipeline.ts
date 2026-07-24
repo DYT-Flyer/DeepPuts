@@ -1,6 +1,7 @@
 import prisma from "@/lib/prisma";
 import { fetchStockNews, fetchCryptoNews } from "@/lib/polygon/news";
 import { detectAnomalies } from "@/lib/polygon/aggregates";
+import { fetchRecent8KFilings } from "@/lib/sec/edgar";
 import { analyzeEvent, PROMPT_VERSION, GEMINI_MODEL } from "@/lib/gemini/analyze";
 import { IngestionService } from "@/domain/ingestion/service";
 import { DeduplicationService } from "@/domain/resolution/service";
@@ -42,16 +43,18 @@ export async function runRefreshCycle(db: PrismaClient = prisma): Promise<void> 
       errors.push(`Anomalies: ${e.message}`);
     }
 
-    // --- Fetch news ---
-    const [stockNews, cryptoNews] = await Promise.allSettled([
+    // --- Fetch news & filings ---
+    const [stockNews, cryptoNews, secFilingsRes] = await Promise.allSettled([
       fetchStockNews(sinceUtc).catch((e) => { errors.push(`Stock news: ${e.message}`); return []; }),
       fetchCryptoNews(sinceUtc).catch((e) => { errors.push(`Crypto news: ${e.message}`); return []; }),
+      fetchRecent8KFilings().catch((e) => { errors.push(`SEC filings: ${e.message}`); return []; }),
     ]);
 
     const stockArticles = stockNews.status === "fulfilled" ? stockNews.value : [];
     const cryptoArticles = cryptoNews.status === "fulfilled" ? cryptoNews.value : [];
+    const secFilings = secFilingsRes.status === "fulfilled" ? secFilingsRes.value : [];
 
-    console.log(`[scheduler] Fetched ${stockArticles.length} stock articles, ${cryptoArticles.length} crypto articles, ${priceAnomalies.length} anomalies`);
+    console.log(`[scheduler] Fetched ${stockArticles.length} stock articles, ${cryptoArticles.length} crypto articles, ${priceAnomalies.length} anomalies, ${secFilings.length} SEC filings`);
 
     const ingestionService = new IngestionService(db);
     const deduplicationService = new DeduplicationService(db);
@@ -133,6 +136,43 @@ export async function runRefreshCycle(db: PrismaClient = prisma): Promise<void> 
         eventsFound++;
       } catch (err) {
         errors.push(`Store crypto event: ${(err as Error).message}`);
+      }
+    }
+
+    // SEC 8-K filings
+    for (const filing of secFilings) {
+      console.log(`[scheduler] SEC Filing: "${filing.companyName}" (${filing.ticker || filing.cik})`);
+      try {
+        const ingested = await ingestionService.ingestEvent({
+          provider: "sec",
+          source: "sec_edgar",
+          assetClass: "stock",
+          externalId: filing.id,
+          tickers: filing.ticker ? [filing.ticker] : [],
+          headline: `SEC 8-K Filing: ${filing.companyName}`,
+          summary: filing.summary,
+          publishedAt: new Date(filing.updatedAt),
+          rawJson: JSON.stringify(filing),
+        }, ingestionRunId);
+
+        if (ingested.status === "duplicate") {
+          console.log(`   ↳ Duplicate event (skipping)`);
+          continue;
+        } else if (ingested.status === "quarantined") {
+          console.log(`   ↳ Quarantined payload: ${ingested.quarantineReason}`);
+          continue;
+        }
+
+        const canonical = await deduplicationService.resolveCanonicalEvent(ingested.id);
+        const matchLabel = canonical.isNewCanonical ? "NEW Canonical Event" : `Merged into Canonical Cluster ${canonical.canonicalEventId}`;
+        console.log(`   ↳ ${matchLabel} (Members: ${canonical.totalMembers}, Match: ${canonical.matchType})`);
+
+        if (canonical.isNewCanonical) {
+          canonicalEventIdsToAnalyze.add(canonical.canonicalEventId);
+        }
+        eventsFound++;
+      } catch (err) {
+        errors.push(`Store SEC event: ${(err as Error).message}`);
       }
     }
 

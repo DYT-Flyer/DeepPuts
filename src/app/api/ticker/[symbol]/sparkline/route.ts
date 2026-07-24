@@ -1,12 +1,13 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { fetchSparkline } from "@/lib/polygon/aggregates";
 
 export async function GET(
-  _req: NextRequest,
+  _req: Request,
   { params }: { params: Promise<{ symbol: string }> }
 ) {
 
-  const { symbol } = await params;
+  const resolvedParams = await params;
+  const symbol = resolvedParams.symbol;
 
   try {
     const data = await fetchSparkline(symbol.toUpperCase(), 30);
