@@ -64,9 +64,12 @@ export function OpportunityCard({ item, loggedIn }: Props) {
                 {item.event.headline}
               </a>
               {domain && (
-                <span className="text-xs font-normal whitespace-nowrap ml-1.5" style={{ color: "var(--text-3)" }}>
-                  {domain}
-                </span>
+                <>
+                  {" "}
+                  <span className="text-xs font-normal whitespace-nowrap" style={{ color: "var(--text-3)" }}>
+                    {domain}
+                  </span>
+                </>
               )}
             </div>
           ) : (

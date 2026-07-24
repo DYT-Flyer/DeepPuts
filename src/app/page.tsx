@@ -150,9 +150,12 @@ function DashboardRow({ item, loggedIn }: { item: DashboardTopItem; loggedIn: bo
                     {item.event.headline}
                   </a>
                   {getDomain(item.event.articleUrl) && (
-                    <span className="text-xs font-normal whitespace-nowrap ml-1.5" style={{ color: "var(--text-3)" }}>
-                      {getDomain(item.event.articleUrl)}
-                    </span>
+                    <>
+                      {" "}
+                      <span className="text-xs font-normal whitespace-nowrap" style={{ color: "var(--text-3)" }}>
+                        {getDomain(item.event.articleUrl)}
+                      </span>
+                    </>
                   )}
                 </>
               ) : (
@@ -160,7 +163,8 @@ function DashboardRow({ item, loggedIn }: { item: DashboardTopItem; loggedIn: bo
                   {item.event.headline}
                 </span>
               )}
-              <span className="text-xs whitespace-nowrap ml-2" style={{ color: "var(--text-3)" }}>
+              {" "}
+              <span className="text-xs whitespace-nowrap ml-1" style={{ color: "var(--text-3)" }}>
                 {formatAge(item.event.publishedAt)}
               </span>
             </div>
