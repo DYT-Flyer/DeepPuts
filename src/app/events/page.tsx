@@ -92,24 +92,24 @@ export default function EventsPage() {
         </div>
 
         {/* Feed */}
-        <div className="rounded-xl overflow-hidden" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+        <div className="overflow-hidden">
           {loading && items.length === 0 ? (
-            <div className="p-4 space-y-3">
+            <div className="space-y-3">
               {Array.from({ length: 8 }).map((_, i) => (
                 <div key={i} className="h-14 rounded-lg animate-pulse" style={{ background: "var(--surface-2)" }} />
               ))}
             </div>
           ) : items.length === 0 ? (
-            <div className="text-center py-20">
+            <div className="text-center py-20 rounded-xl" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
               <p className="text-sm" style={{ color: "var(--text-3)" }}>No events yet</p>
               <p className="text-xs mt-1" style={{ color: "#333" }}>Start the scheduler to begin ingesting events</p>
             </div>
           ) : (
             <>
               {groupByDay(items).map(({ label, events }) => (
-                <div key={label}>
-                  <div className="px-4 py-2 flex items-center gap-3 sticky top-14 z-10"
-                    style={{ background: "var(--surface)", borderBottom: "1px solid var(--border)" }}>
+                <div key={label} className="mb-6">
+                  <div className="py-2 flex items-center gap-3 sticky top-14 z-10 mb-2"
+                    style={{ backdropFilter: "blur(8px)", background: "rgba(0,0,0,0.5)" }}>
                     <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--text-3)" }}>{label}</span>
                     <span className="text-xs font-mono px-1.5 py-0.5 rounded" style={{ background: "var(--surface-2)", color: "#555", border: "1px solid var(--border)" }}>
                       {events.length}
