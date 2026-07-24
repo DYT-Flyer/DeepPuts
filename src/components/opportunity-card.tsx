@@ -5,6 +5,7 @@ import { ConvictionBadge } from "./conviction-badge";
 import { SignalBadge } from "./signal-badge";
 import { VoteButtons } from "./social/vote-buttons";
 import type { OpportunityItem } from "@/types";
+import { useRouter } from "next/navigation";
 import { formatCatalyst } from "@/lib/utils";
 
 interface Props {
@@ -13,13 +14,15 @@ interface Props {
 }
 
 export function OpportunityCard({ item, loggedIn }: Props) {
+  const router = useRouter();
   const age = formatAge(item.event.publishedAt);
 
   const catalyst = item.catalystDate ? formatCatalyst(item.catalystDate) : null;
 
   return (
     <div
-      className="group rounded-xl p-4 flex flex-col gap-3 transition-all duration-200"
+      onClick={() => router.push(`/opportunity/${item.id}#comments`)}
+      className="group rounded-xl p-4 flex flex-col gap-3 transition-all duration-200 cursor-pointer"
       style={{
         background: "#161616",
         border: "1px solid var(--border)",
@@ -50,6 +53,7 @@ export function OpportunityCard({ item, loggedIn }: Props) {
               href={item.event.articleUrl}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
               className="text-sm font-medium leading-snug line-clamp-2 transition-colors"
               style={{ color: "#d4d4d4" }}
               onMouseEnter={e => (e.currentTarget.style.color = "#fff")}
@@ -106,7 +110,7 @@ export function OpportunityCard({ item, loggedIn }: Props) {
         </span>
 
         {/* Vote + comments */}
-        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "6px" }} onClick={(e) => e.stopPropagation()}>
           <VoteButtons
             analysisId={item.id}
             initialScore={item.voteScore}

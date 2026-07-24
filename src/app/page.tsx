@@ -121,12 +121,16 @@ export default function DashboardPage() {
   );
 }
 
+import { useRouter } from "next/navigation";
+
 function DashboardRow({ item, loggedIn }: { item: DashboardTopItem; loggedIn: boolean }) {
+  const router = useRouter();
   const catalyst = item.catalystDate ? formatCatalyst(item.catalystDate) : null;
 
   return (
     <div
-      className="rounded-xl px-4 py-4 transition-all"
+      onClick={() => router.push(`/opportunity/${item.id}#comments`)}
+      className="rounded-xl px-4 py-4 transition-all cursor-pointer"
       style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
       onMouseEnter={e => (e.currentTarget.style.borderColor = "var(--border-hover)")}
       onMouseLeave={e => (e.currentTarget.style.borderColor = "var(--border)")}
@@ -138,6 +142,7 @@ function DashboardRow({ item, loggedIn }: { item: DashboardTopItem; loggedIn: bo
             <div className="flex items-center justify-between gap-2">
               {item.event.articleUrl ? (
                 <a href={item.event.articleUrl} target="_blank" rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
                   className="block text-sm font-medium leading-snug line-clamp-1 transition-colors"
                   style={{ color: "#fff" }}
                 >
@@ -169,7 +174,7 @@ function DashboardRow({ item, loggedIn }: { item: DashboardTopItem; loggedIn: bo
             >{catalyst.label}</span>
           )}
           {item.affectedTickers.slice(0, 4).map((t) => (
-            <span key={t} className="flex items-center gap-1.5">
+            <span key={t} className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
               <span style={{ color: "#2a2a2a" }}>·</span>
               <Link href={`/ticker/${t}`} className="text-xs font-mono transition-colors"
                 style={{ color: "#aaa" }}
@@ -179,7 +184,7 @@ function DashboardRow({ item, loggedIn }: { item: DashboardTopItem; loggedIn: bo
             </span>
           ))}
           <span style={{ flex: 1 }} />
-          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "6px" }} onClick={(e) => e.stopPropagation()}>
             <VoteButtons
               analysisId={item.id}
               initialScore={item.voteScore}

@@ -402,7 +402,7 @@ export default function OpportunityPage({ params }: { params: Promise<{ id: stri
             </div>
 
             {/* Comments */}
-            <div>
+            <div id="comments">
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                   <h2 className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--text-3)" }}>
