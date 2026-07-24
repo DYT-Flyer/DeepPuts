@@ -34,6 +34,7 @@ const STATUS_DOT: Record<string, string> = {
 export default function DashboardPage() {
   const { data: session } = useSession();
   const [data, setData] = useState<DashboardStats | null>(null);
+  const [quotes, setQuotes] = useState<Record<string, { change: number; changePerc: number }>>({});
   const [loading, setLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
 
@@ -46,6 +47,16 @@ export default function DashboardPage() {
     const interval = setInterval(loadData, 30000); // Auto-update every 30s
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    if (data?.trendingTickers?.length) {
+      const tickers = data.trendingTickers.map(t => t.ticker).join(",");
+      fetch(`/api/quotes?tickers=${tickers}`)
+        .then(r => r.json())
+        .then(q => setQuotes(q))
+        .catch(console.error);
+    }
+  }, [data?.trendingTickers]);
 
   if (!mounted) return null;
 
@@ -60,12 +71,19 @@ export default function DashboardPage() {
           <div className="mb-8 trending-section">
             <h2 className="text-xs font-semibold uppercase tracking-widest mb-3 trending-title" style={{ color: "var(--text-3)" }}>Trending</h2>
             <div className="trending-container">
-              {data.trendingTickers.map(({ ticker, count }) => (
-                <Link key={ticker} href={`/ticker/${ticker}`} className="trending-tag">
-                  <span className="trending-ticker">{ticker}</span>
-                  <span className="trending-count">{count}</span>
-                </Link>
-              ))}
+              {data.trendingTickers.map(({ ticker, count }) => {
+                const quote = quotes[ticker];
+                let trendClass = "";
+                if (quote) {
+                  trendClass = quote.change >= 0 ? " up" : " down";
+                }
+                return (
+                  <Link key={ticker} href={`/ticker/${ticker}`} className={`trending-tag${trendClass}`}>
+                    <span className="trending-ticker">{ticker}</span>
+                    <span className="trending-count">{count}</span>
+                  </Link>
+                );
+              })}
             </div>
           </div>
         )}

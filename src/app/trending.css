@@ -22,34 +22,38 @@
   overflow: hidden;
 }
 
-.trending-tag::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(244, 63, 94, 0.2),
-    transparent
-  );
-  transition: left 0.5s ease;
-  pointer-events: none;
+.trending-tag.up {
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  background: rgba(34, 197, 94, 0.05);
 }
+.trending-tag.up::before {
+  background: linear-gradient(90deg, transparent, rgba(34, 197, 94, 0.2), transparent);
+}
+.trending-tag.up:hover {
+  border-color: rgba(34, 197, 94, 0.5);
+  background: rgba(34, 197, 94, 0.1);
+  color: #fff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.2);
+}
+.trending-tag.up:hover::before { left: 100%; }
 
-.trending-tag:hover {
+.trending-tag.down {
+  border: 1px solid rgba(244, 63, 94, 0.3);
+  background: rgba(244, 63, 94, 0.05);
+}
+.trending-tag.down::before {
+  background: linear-gradient(90deg, transparent, rgba(244, 63, 94, 0.2), transparent);
+}
+.trending-tag.down:hover {
   border-color: rgba(244, 63, 94, 0.5);
   background: rgba(244, 63, 94, 0.1);
   color: #fff;
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(244, 63, 94, 0.2);
 }
+.trending-tag.down:hover::before { left: 100%; }
 
-.trending-tag:hover::before {
-  left: 100%;
-}
 
 .trending-ticker {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
