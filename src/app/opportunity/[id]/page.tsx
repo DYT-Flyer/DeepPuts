@@ -11,6 +11,7 @@ import { VoteButtons } from "@/components/social/vote-buttons";
 import { OpportunityCard } from "@/components/opportunity-card";
 import { STATUS_LABELS, type ThesisStatus } from "@/lib/performance/calculator";
 import type { OpportunityItem, SignalType } from "@/types";
+import { getDomain } from "@/lib/utils";
 
 interface Comment {
   id: string;
@@ -175,13 +176,14 @@ export default function OpportunityPage({ params }: { params: Promise<{ id: stri
                 <div style={{ flex: 1, minWidth: 0 }}>
                   {data.event.articleUrl ? (
                     <a href={data.event.articleUrl} target="_blank" rel="noopener noreferrer"
-                      className="inline-flex items-start gap-1.5 text-base font-semibold leading-snug transition-colors"
+                      className="inline-flex items-center gap-1.5 text-base font-semibold leading-snug transition-colors flex-wrap"
                       style={{ color: "#fff" }}
                       onMouseEnter={e => (e.currentTarget.style.color = "#ddd")}
                       onMouseLeave={e => (e.currentTarget.style.color = "#fff")}
                     >
-                      {data.event.headline}
-                      <ExternalLink size={13} style={{ marginTop: "3px", flexShrink: 0, color: "#555" }} />
+                      <span>{data.event.headline}</span>
+                      {getDomain(data.event.articleUrl) && <span className="text-sm font-normal" style={{ color: "var(--text-3)" }}>{getDomain(data.event.articleUrl)}</span>}
+                      <ExternalLink size={13} style={{ flexShrink: 0, color: "#555" }} />
                     </a>
                   ) : (
                     <p className="text-base font-semibold leading-snug" style={{ color: "#fff" }}>{data.event.headline}</p>

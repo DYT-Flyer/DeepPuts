@@ -9,7 +9,7 @@ import { SignalBadge } from "@/components/signal-badge";
 import { VoteButtons } from "@/components/social/vote-buttons";
 import { RefreshCw, ArrowUpRight } from "lucide-react";
 import type { SignalType } from "@/types";
-import { formatCatalyst } from "@/lib/utils";
+import { formatCatalyst, getDomain } from "@/lib/utils";
 import "./trending.css";
 
 interface DashboardTopItem {
@@ -143,13 +143,14 @@ function DashboardRow({ item, loggedIn }: { item: DashboardTopItem; loggedIn: bo
               {item.event.articleUrl ? (
                 <a href={item.event.articleUrl} target="_blank" rel="noopener noreferrer"
                   onClick={(e) => e.stopPropagation()}
-                  className="block text-sm font-medium leading-snug line-clamp-1 transition-colors"
+                  className="text-sm font-medium leading-snug line-clamp-1 transition-colors inline"
                   style={{ color: "#fff" }}
                 >
                   {item.event.headline}
+                  {getDomain(item.event.articleUrl) && <span className="text-xs font-normal ml-1.5" style={{ color: "var(--text-3)" }}>{getDomain(item.event.articleUrl)}</span>}
                 </a>
               ) : (
-                <p className="text-sm font-medium leading-snug line-clamp-1" style={{ color: "#fff" }}>
+                <p className="text-sm font-medium leading-snug line-clamp-1 inline" style={{ color: "#fff" }}>
                   {item.event.headline}
                 </p>
               )}

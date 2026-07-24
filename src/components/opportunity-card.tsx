@@ -6,7 +6,7 @@ import { SignalBadge } from "./signal-badge";
 import { VoteButtons } from "./social/vote-buttons";
 import type { OpportunityItem } from "@/types";
 import { useRouter } from "next/navigation";
-import { formatCatalyst } from "@/lib/utils";
+import { formatCatalyst, getDomain } from "@/lib/utils";
 
 interface Props {
   item: OpportunityItem;
@@ -16,6 +16,7 @@ interface Props {
 export function OpportunityCard({ item, loggedIn }: Props) {
   const router = useRouter();
   const age = formatAge(item.event.publishedAt);
+  const domain = getDomain(item.event.articleUrl);
 
   const catalyst = item.catalystDate ? formatCatalyst(item.catalystDate) : null;
 
@@ -54,12 +55,13 @@ export function OpportunityCard({ item, loggedIn }: Props) {
               target="_blank"
               rel="noopener noreferrer"
               onClick={(e) => e.stopPropagation()}
-              className="text-sm font-medium leading-snug line-clamp-2 transition-colors"
+              className="text-sm font-medium leading-snug line-clamp-2 transition-colors inline"
               style={{ color: "#d4d4d4" }}
               onMouseEnter={e => (e.currentTarget.style.color = "#fff")}
               onMouseLeave={e => (e.currentTarget.style.color = "#d4d4d4")}
             >
               {item.event.headline}
+              {domain && <span className="text-xs font-normal ml-1.5" style={{ color: "var(--text-3)" }}>{domain}</span>}
             </a>
           ) : (
             <p className="text-sm font-medium leading-snug line-clamp-2" style={{ color: "#d4d4d4" }}>

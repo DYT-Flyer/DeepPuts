@@ -13,3 +13,13 @@ export function formatCatalyst(isoDate: string): { label: string; urgent: boolea
   if (days < 0 && days >= -30) return { label: `${Math.abs(days)}d ago`, urgent: false };
   return null;
 }
+
+export function getDomain(url: string | null | undefined): string | null {
+  if (!url) return null;
+  try {
+    const hostname = new URL(url).hostname;
+    return hostname.replace(/^www\./, "");
+  } catch (e) {
+    return null;
+  }
+}
