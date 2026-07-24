@@ -57,8 +57,8 @@ export default function DashboardPage() {
 
         {/* Trending tickers */}
         {data?.trendingTickers && data.trendingTickers.length > 0 && (
-          <div className="mb-8">
-            <h2 className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: "var(--text-3)" }}>Trending</h2>
+          <div className="mb-8 trending-section">
+            <h2 className="text-xs font-semibold uppercase tracking-widest mb-3 trending-title" style={{ color: "var(--text-3)" }}>Trending</h2>
             <div className="trending-container">
               {data.trendingTickers.map(({ ticker, count }) => (
                 <Link key={ticker} href={`/ticker/${ticker}`} className="trending-tag">

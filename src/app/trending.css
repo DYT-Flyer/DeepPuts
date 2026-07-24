@@ -74,3 +74,14 @@
   background: rgba(244, 63, 94, 0.2);
   color: #f43f5e;
 }
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .trending-title {
+    text-align: center;
+  }
+  
+  .trending-container {
+    justify-content: center;
+  }
+}
