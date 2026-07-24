@@ -70,7 +70,7 @@ export default function DashboardPage() {
           </div>
         )}
 
-        <div className="flex gap-6">
+        <div className="flex flex-col lg:flex-row gap-6">
           {/* Main — Top Opportunities */}
           <div className="flex-1 min-w-0">
             <SectionHeader title="Top Opportunities" href="/opportunities" />
