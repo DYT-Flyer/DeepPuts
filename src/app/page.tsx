@@ -139,22 +139,28 @@ function DashboardRow({ item, loggedIn }: { item: DashboardTopItem; loggedIn: bo
         <div style={{ display: "flex", alignItems: "flex-start", gap: "10px", marginBottom: "4px" }}>
           <ConvictionBadge score={item.convictionScore} size="sm" />
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-3 w-full">
               {item.event.articleUrl ? (
-                <a href={item.event.articleUrl} target="_blank" rel="noopener noreferrer"
-                  onClick={(e) => e.stopPropagation()}
-                  className="text-sm font-medium leading-snug line-clamp-1 transition-colors inline"
-                  style={{ color: "#fff" }}
-                >
-                  {item.event.headline}
-                  {getDomain(item.event.articleUrl) && <span className="text-xs font-normal ml-1.5" style={{ color: "var(--text-3)" }}>{getDomain(item.event.articleUrl)}</span>}
-                </a>
+                <>
+                  <a href={item.event.articleUrl} target="_blank" rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    className="text-sm font-medium leading-snug truncate transition-colors hover:underline"
+                    style={{ color: "#fff" }}
+                  >
+                    {item.event.headline}
+                  </a>
+                  {getDomain(item.event.articleUrl) && (
+                    <span className="text-xs font-normal whitespace-nowrap" style={{ color: "var(--text-3)" }}>
+                      {getDomain(item.event.articleUrl)}
+                    </span>
+                  )}
+                </>
               ) : (
-                <p className="text-sm font-medium leading-snug line-clamp-1 inline" style={{ color: "#fff" }}>
+                <p className="text-sm font-medium leading-snug truncate" style={{ color: "#fff" }}>
                   {item.event.headline}
                 </p>
               )}
-              <span className="text-xs whitespace-nowrap" style={{ color: "var(--text-3)" }}>
+              <span className="text-xs whitespace-nowrap ml-auto" style={{ color: "var(--text-3)" }}>
                 {formatAge(item.event.publishedAt)}
               </span>
             </div>
