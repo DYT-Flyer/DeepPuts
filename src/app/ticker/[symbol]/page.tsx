@@ -62,7 +62,7 @@ export default function TickerPage({ params }: { params: Promise<{ symbol: strin
 
   const isHigh = Number(avgConviction) >= 7;
   const isMid = Number(avgConviction) >= 4;
-  const scoreColor = isHigh ? "#f43f5e" : isMid ? "#f59e0b" : "#555";
+  const scoreColor = isHigh ? "#fb7185" : isMid ? "#fbbf24" : "#9ca3af";
 
   return (
     <div className="min-h-screen" style={{ background: "var(--bg)" }}>
