@@ -175,16 +175,24 @@ export default function OpportunityPage({ params }: { params: Promise<{ id: stri
                 <ConvictionBadge score={data.convictionScore} />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   {data.event.articleUrl ? (
-                    <a href={data.event.articleUrl} target="_blank" rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 text-base font-semibold leading-snug transition-colors flex-wrap"
-                      style={{ color: "#fff" }}
-                      onMouseEnter={e => (e.currentTarget.style.color = "#ddd")}
-                      onMouseLeave={e => (e.currentTarget.style.color = "#fff")}
-                    >
-                      <span>{data.event.headline}</span>
-                      {getDomain(data.event.articleUrl) && <span className="text-sm font-normal" style={{ color: "var(--text-3)" }}>{getDomain(data.event.articleUrl)}</span>}
-                      <ExternalLink size={13} style={{ flexShrink: 0, color: "#555" }} />
-                    </a>
+                    <div className="flex items-baseline flex-wrap gap-x-2 gap-y-1">
+                      <a href={data.event.articleUrl} target="_blank" rel="noopener noreferrer"
+                        className="text-base font-semibold leading-snug transition-colors hover:underline inline"
+                        style={{ color: "#fff" }}
+                        onMouseEnter={e => (e.currentTarget.style.color = "#ddd")}
+                        onMouseLeave={e => (e.currentTarget.style.color = "#fff")}
+                      >
+                        {data.event.headline}
+                      </a>
+                      {getDomain(data.event.articleUrl) && (
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-sm font-normal" style={{ color: "var(--text-3)" }}>
+                            {getDomain(data.event.articleUrl)}
+                          </span>
+                          <ExternalLink size={13} style={{ flexShrink: 0, color: "#555" }} />
+                        </div>
+                      )}
+                    </div>
                   ) : (
                     <p className="text-base font-semibold leading-snug" style={{ color: "#fff" }}>{data.event.headline}</p>
                   )}
