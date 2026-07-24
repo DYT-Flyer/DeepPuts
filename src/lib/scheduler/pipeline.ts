@@ -5,6 +5,7 @@ import { detectAnomalies } from "@/lib/polygon/aggregates";
 import { fetchRecent8KFilings } from "@/lib/sec/edgar";
 import { fetchCnbcNews } from "@/lib/cnbc/rss";
 import { fetchWsjNews } from "@/lib/wsj/rss";
+import { fetchSeekingAlphaNews, fetchMarketWatchNews, fetchBenzingaNews } from "@/lib/rss/index";
 import { analyzeEvent, PROMPT_VERSION, GEMINI_MODEL } from "@/lib/gemini/analyze";
 import { IngestionService } from "@/domain/ingestion/service";
 import { DeduplicationService } from "@/domain/resolution/service";
@@ -41,12 +42,15 @@ export async function runRefreshCycle(db: PrismaClient = prisma): Promise<void> 
     }
 
     // --- Fetch news & filings ---
-    const [stockNews, cryptoNews, secFilingsRes, cnbcNewsRes, wsjNewsRes] = await Promise.allSettled([
+    const [stockNews, cryptoNews, secFilingsRes, cnbcNewsRes, wsjNewsRes, seekingAlphaRes, marketWatchRes, benzingaRes] = await Promise.allSettled([
       fetchStockNews(sinceUtc).catch((e) => { errors.push(`Stock news: ${e.message}`); return []; }),
       fetchCryptoNews(sinceUtc).catch((e) => { errors.push(`Crypto news: ${e.message}`); return []; }),
       fetchRecent8KFilings().catch((e) => { errors.push(`SEC filings: ${e.message}`); return []; }),
       fetchCnbcNews().catch((e) => { errors.push(`CNBC news: ${e.message}`); return []; }),
       fetchWsjNews().catch((e) => { errors.push(`WSJ news: ${e.message}`); return []; }),
+      fetchSeekingAlphaNews().catch((e) => { errors.push(`Seeking Alpha news: ${e.message}`); return []; }),
+      fetchMarketWatchNews().catch((e) => { errors.push(`MarketWatch news: ${e.message}`); return []; }),
+      fetchBenzingaNews().catch((e) => { errors.push(`Benzinga news: ${e.message}`); return []; }),
     ]);
 
     const stockArticles = stockNews.status === "fulfilled" ? stockNews.value : [];
@@ -54,8 +58,11 @@ export async function runRefreshCycle(db: PrismaClient = prisma): Promise<void> 
     const secFilings = secFilingsRes.status === "fulfilled" ? secFilingsRes.value : [];
     const cnbcArticles = cnbcNewsRes.status === "fulfilled" ? cnbcNewsRes.value : [];
     const wsjArticles = wsjNewsRes.status === "fulfilled" ? wsjNewsRes.value : [];
+    const seekingAlphaArticles = seekingAlphaRes.status === "fulfilled" ? seekingAlphaRes.value : [];
+    const marketWatchArticles = marketWatchRes.status === "fulfilled" ? marketWatchRes.value : [];
+    const benzingaArticles = benzingaRes.status === "fulfilled" ? benzingaRes.value : [];
 
-    console.log(`[scheduler] Fetched ${stockArticles.length} stock articles, ${cryptoArticles.length} crypto articles, ${priceAnomalies.length} anomalies, ${secFilings.length} SEC filings, ${cnbcArticles.length} CNBC articles, ${wsjArticles.length} WSJ articles`);
+    console.log(`[scheduler] Fetched ${stockArticles.length} stock, ${cryptoArticles.length} crypto, ${priceAnomalies.length} anomalies, ${secFilings.length} SEC, ${cnbcArticles.length} CNBC, ${wsjArticles.length} WSJ, ${seekingAlphaArticles.length} SA, ${marketWatchArticles.length} MW, ${benzingaArticles.length} Benzinga`);
 
     const ingestionService = new IngestionService(db);
     const deduplicationService = new DeduplicationService(db);
@@ -176,6 +183,54 @@ export async function runRefreshCycle(db: PrismaClient = prisma): Promise<void> 
         publishedAt: new Date(article.publishedAt),
         rawJson: JSON.stringify(article),
       }, "WSJ", article.id);
+    }
+
+    // Seeking Alpha Articles
+    for (const article of seekingAlphaArticles) {
+      console.log(`[scheduler] Queuing Seeking Alpha Article: "${article.title}"`);
+      pushIngestTask({
+        provider: "seeking_alpha",
+        source: "seeking_alpha_rss",
+        assetClass: "stock",
+        externalId: article.id,
+        tickers: [],
+        headline: article.title,
+        summary: article.summary,
+        publishedAt: new Date(article.publishedAt),
+        rawJson: JSON.stringify(article),
+      }, "SeekingAlpha", article.id);
+    }
+
+    // MarketWatch Articles
+    for (const article of marketWatchArticles) {
+      console.log(`[scheduler] Queuing MarketWatch Article: "${article.title}"`);
+      pushIngestTask({
+        provider: "marketwatch",
+        source: "marketwatch_rss",
+        assetClass: "stock",
+        externalId: article.id,
+        tickers: [],
+        headline: article.title,
+        summary: article.summary,
+        publishedAt: new Date(article.publishedAt),
+        rawJson: JSON.stringify(article),
+      }, "MarketWatch", article.id);
+    }
+
+    // Benzinga Articles
+    for (const article of benzingaArticles) {
+      console.log(`[scheduler] Queuing Benzinga Article: "${article.title}"`);
+      pushIngestTask({
+        provider: "benzinga",
+        source: "benzinga_rss",
+        assetClass: "stock",
+        externalId: article.id,
+        tickers: [],
+        headline: article.title,
+        summary: article.summary,
+        publishedAt: new Date(article.publishedAt),
+        rawJson: JSON.stringify(article),
+      }, "Benzinga", article.id);
     }
 
     // Price anomalies as events
