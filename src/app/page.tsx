@@ -144,23 +144,23 @@ function DashboardRow({ item, loggedIn }: { item: DashboardTopItem; loggedIn: bo
                 <>
                   <a href={item.event.articleUrl} target="_blank" rel="noopener noreferrer"
                     onClick={(e) => e.stopPropagation()}
-                    className="text-sm font-medium leading-snug truncate transition-colors hover:underline"
+                    className="min-w-0 text-sm font-medium leading-snug truncate transition-colors hover:underline"
                     style={{ color: "#fff" }}
                   >
                     {item.event.headline}
                   </a>
                   {getDomain(item.event.articleUrl) && (
-                    <span className="text-xs font-normal whitespace-nowrap" style={{ color: "var(--text-3)" }}>
+                    <span className="text-xs font-normal whitespace-nowrap shrink-0" style={{ color: "var(--text-3)" }}>
                       {getDomain(item.event.articleUrl)}
                     </span>
                   )}
                 </>
               ) : (
-                <p className="text-sm font-medium leading-snug truncate" style={{ color: "#fff" }}>
+                <p className="min-w-0 text-sm font-medium leading-snug truncate" style={{ color: "#fff" }}>
                   {item.event.headline}
                 </p>
               )}
-              <span className="text-xs whitespace-nowrap ml-auto" style={{ color: "var(--text-3)" }}>
+              <span className="text-xs whitespace-nowrap ml-auto shrink-0" style={{ color: "var(--text-3)" }}>
                 {formatAge(item.event.publishedAt)}
               </span>
             </div>
