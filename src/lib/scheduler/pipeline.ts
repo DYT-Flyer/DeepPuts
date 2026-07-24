@@ -4,6 +4,7 @@ import { fetchStockNews, fetchCryptoNews } from "@/lib/polygon/news";
 import { detectAnomalies } from "@/lib/polygon/aggregates";
 import { fetchRecent8KFilings } from "@/lib/sec/edgar";
 import { fetchCnbcNews } from "@/lib/cnbc/rss";
+import { fetchWsjNews } from "@/lib/wsj/rss";
 import { analyzeEvent, PROMPT_VERSION, GEMINI_MODEL } from "@/lib/gemini/analyze";
 import { IngestionService } from "@/domain/ingestion/service";
 import { DeduplicationService } from "@/domain/resolution/service";
@@ -40,19 +41,21 @@ export async function runRefreshCycle(db: PrismaClient = prisma): Promise<void> 
     }
 
     // --- Fetch news & filings ---
-    const [stockNews, cryptoNews, secFilingsRes, cnbcNewsRes] = await Promise.allSettled([
+    const [stockNews, cryptoNews, secFilingsRes, cnbcNewsRes, wsjNewsRes] = await Promise.allSettled([
       fetchStockNews(sinceUtc).catch((e) => { errors.push(`Stock news: ${e.message}`); return []; }),
       fetchCryptoNews(sinceUtc).catch((e) => { errors.push(`Crypto news: ${e.message}`); return []; }),
       fetchRecent8KFilings().catch((e) => { errors.push(`SEC filings: ${e.message}`); return []; }),
       fetchCnbcNews().catch((e) => { errors.push(`CNBC news: ${e.message}`); return []; }),
+      fetchWsjNews().catch((e) => { errors.push(`WSJ news: ${e.message}`); return []; }),
     ]);
 
     const stockArticles = stockNews.status === "fulfilled" ? stockNews.value : [];
     const cryptoArticles = cryptoNews.status === "fulfilled" ? cryptoNews.value : [];
     const secFilings = secFilingsRes.status === "fulfilled" ? secFilingsRes.value : [];
     const cnbcArticles = cnbcNewsRes.status === "fulfilled" ? cnbcNewsRes.value : [];
+    const wsjArticles = wsjNewsRes.status === "fulfilled" ? wsjNewsRes.value : [];
 
-    console.log(`[scheduler] Fetched ${stockArticles.length} stock articles, ${cryptoArticles.length} crypto articles, ${priceAnomalies.length} anomalies, ${secFilings.length} SEC filings, ${cnbcArticles.length} CNBC articles`);
+    console.log(`[scheduler] Fetched ${stockArticles.length} stock articles, ${cryptoArticles.length} crypto articles, ${priceAnomalies.length} anomalies, ${secFilings.length} SEC filings, ${cnbcArticles.length} CNBC articles, ${wsjArticles.length} WSJ articles`);
 
     const ingestionService = new IngestionService(db);
     const deduplicationService = new DeduplicationService(db);
@@ -157,6 +160,22 @@ export async function runRefreshCycle(db: PrismaClient = prisma): Promise<void> 
         publishedAt: new Date(article.publishedAt),
         rawJson: JSON.stringify(article),
       }, "CNBC", article.id);
+    }
+
+    // WSJ Articles
+    for (const article of wsjArticles) {
+      console.log(`[scheduler] Queuing WSJ Article: "${article.title}"`);
+      pushIngestTask({
+        provider: "wsj",
+        source: "wsj_rss",
+        assetClass: "stock",
+        externalId: article.id,
+        tickers: [],
+        headline: article.title,
+        summary: article.summary,
+        publishedAt: new Date(article.publishedAt),
+        rawJson: JSON.stringify(article),
+      }, "WSJ", article.id);
     }
 
     // Price anomalies as events
