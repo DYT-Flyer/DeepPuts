@@ -34,16 +34,22 @@ export async function runRefreshCycle(db: PrismaClient = prisma): Promise<void> 
     const sinceUtc = lastSuccess?.startedAt?.toISOString();
     console.log(`[scheduler] Fetching news since: ${sinceUtc || "beginning"}`);
 
+    // --- Detect Anomalies First ---
+    let priceAnomalies: any[] = [];
+    try {
+      priceAnomalies = await detectAnomalies();
+    } catch (e: any) {
+      errors.push(`Anomalies: ${e.message}`);
+    }
+
     // --- Fetch news ---
-    const [stockNews, cryptoNews, anomalies] = await Promise.allSettled([
+    const [stockNews, cryptoNews] = await Promise.allSettled([
       fetchStockNews(sinceUtc).catch((e) => { errors.push(`Stock news: ${e.message}`); return []; }),
       fetchCryptoNews(sinceUtc).catch((e) => { errors.push(`Crypto news: ${e.message}`); return []; }),
-      detectAnomalies().catch((e) => { errors.push(`Anomalies: ${e.message}`); return []; }),
     ]);
 
     const stockArticles = stockNews.status === "fulfilled" ? stockNews.value : [];
     const cryptoArticles = cryptoNews.status === "fulfilled" ? cryptoNews.value : [];
-    const priceAnomalies = anomalies.status === "fulfilled" ? anomalies.value : [];
 
     console.log(`[scheduler] Fetched ${stockArticles.length} stock articles, ${cryptoArticles.length} crypto articles, ${priceAnomalies.length} anomalies`);
 
