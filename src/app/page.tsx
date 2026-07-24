@@ -139,32 +139,33 @@ function DashboardRow({ item, loggedIn }: { item: DashboardTopItem; loggedIn: bo
         <div style={{ display: "flex", alignItems: "flex-start", gap: "10px", marginBottom: "4px" }}>
           <ConvictionBadge score={item.convictionScore} size="sm" />
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div className="w-full truncate leading-snug">
-              {item.event.articleUrl ? (
-                <>
-                  <a href={item.event.articleUrl} target="_blank" rel="noopener noreferrer"
-                    onClick={(e) => e.stopPropagation()}
-                    className="text-sm font-medium transition-colors hover:underline"
-                    style={{ color: "#fff" }}
-                  >
+            <div className="flex items-center gap-3 w-full">
+              <div className="flex-1 min-w-0 truncate leading-snug">
+                {item.event.articleUrl ? (
+                  <>
+                    <a href={item.event.articleUrl} target="_blank" rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      className="text-sm font-medium transition-colors hover:underline"
+                      style={{ color: "#fff" }}
+                    >
+                      {item.event.headline}
+                    </a>
+                    {getDomain(item.event.articleUrl) && (
+                      <>
+                        {" "}
+                        <span className="text-xs font-normal whitespace-nowrap" style={{ color: "var(--text-3)" }}>
+                          {getDomain(item.event.articleUrl)}
+                        </span>
+                      </>
+                    )}
+                  </>
+                ) : (
+                  <span className="text-sm font-medium" style={{ color: "#fff" }}>
                     {item.event.headline}
-                  </a>
-                  {getDomain(item.event.articleUrl) && (
-                    <>
-                      {" "}
-                      <span className="text-xs font-normal whitespace-nowrap" style={{ color: "var(--text-3)" }}>
-                        {getDomain(item.event.articleUrl)}
-                      </span>
-                    </>
-                  )}
-                </>
-              ) : (
-                <span className="text-sm font-medium" style={{ color: "#fff" }}>
-                  {item.event.headline}
-                </span>
-              )}
-              {" "}
-              <span className="text-xs whitespace-nowrap ml-1" style={{ color: "var(--text-3)" }}>
+                  </span>
+                )}
+              </div>
+              <span className="shrink-0 text-xs whitespace-nowrap text-right" style={{ color: "var(--text-3)" }}>
                 {formatAge(item.event.publishedAt)}
               </span>
             </div>
