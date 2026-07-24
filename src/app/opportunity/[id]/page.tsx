@@ -202,32 +202,7 @@ export default function OpportunityPage({ params }: { params: Promise<{ id: stri
                 </div>
               </div>
 
-              {/* AI disclaimer */}
-              <div className="flex items-center gap-2 mb-3 px-1">
-                <span className="text-xs px-2 py-0.5 rounded font-medium"
-                  style={{ background: "rgba(255,255,255,0.05)", color: "#555", border: "1px solid rgba(255,255,255,0.07)" }}>
-                  AI-generated
-                </span>
-                {data.confidenceLabel && (
-                  <span className="text-xs px-2 py-0.5 rounded"
-                    style={{ background: "rgba(255,255,255,0.04)", color: "#555", border: "1px solid rgba(255,255,255,0.06)" }}>
-                    {data.confidenceLabel} confidence
-                  </span>
-                )}
-                {data.timeHorizon && (
-                  <span className="text-xs px-2 py-0.5 rounded"
-                    style={{ background: "rgba(255,255,255,0.04)", color: "#555", border: "1px solid rgba(255,255,255,0.06)" }}>
-                    {data.timeHorizon}
-                  </span>
-                )}
-                {data.sourceQuality && (
-                  <span className="text-xs px-2 py-0.5 rounded"
-                    style={{ background: "rgba(255,255,255,0.04)", color: "#555", border: "1px solid rgba(255,255,255,0.06)" }}>
-                    {data.sourceQuality} source
-                  </span>
-                )}
-                <span className="text-xs" style={{ color: "#333" }}>· Not investment advice</span>
-              </div>
+
 
               {/* Bear thesis */}
               <div className="rounded-lg p-4 mb-4" style={{ background: "rgba(244,63,94,0.04)", border: "1px solid rgba(244,63,94,0.12)" }}>
