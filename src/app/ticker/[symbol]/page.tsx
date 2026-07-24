@@ -82,48 +82,55 @@ export default function TickerPage({ params }: { params: Promise<{ symbol: strin
         {/* Ticker header card */}
         <div className="rounded-xl p-6 mb-6" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
           <div className="flex items-start justify-between mb-5">
-            <div className="flex items-center gap-3">
-              <h1 className="text-3xl font-bold font-mono tracking-tight" style={{ color: "var(--text)" }}>{upper}</h1>
-              {session && (
-                <button
-                  onClick={toggleWatch}
-                  disabled={watchLoading}
-                  title={watching ? "Remove from watchlist" : "Add to watchlist"}
-                  style={{
-                    background: "none",
-                    border: "none",
-                    cursor: watchLoading ? "default" : "pointer",
-                    padding: "4px",
-                    borderRadius: "6px",
-                    color: watching ? "#f59e0b" : "#444",
-                    transition: "color 0.15s",
-                    opacity: watchLoading ? 0.5 : 1,
-                  }}
-                  onMouseEnter={e => { if (!watchLoading) e.currentTarget.style.color = watching ? "#fbbf24" : "#666"; }}
-                  onMouseLeave={e => { e.currentTarget.style.color = watching ? "#f59e0b" : "#444"; }}
-                >
-                  <Star size={18} fill={watching ? "#f59e0b" : "none"} />
-                </button>
-              )}
+            <div className="flex flex-col gap-3">
+              <div className="flex items-center gap-3">
+                <h1 className="text-3xl font-bold tracking-tight" style={{ color: "var(--text)" }}>{upper}</h1>
+                {session && (
+                  <button
+                    onClick={toggleWatch}
+                    disabled={watchLoading}
+                    title={watching ? "Remove from watchlist" : "Add to watchlist"}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      cursor: watchLoading ? "default" : "pointer",
+                      padding: "4px",
+                      borderRadius: "6px",
+                      color: watching ? "#f59e0b" : "#444",
+                      transition: "color 0.15s",
+                      opacity: watchLoading ? 0.5 : 1,
+                    }}
+                    onMouseEnter={e => { if (!watchLoading) e.currentTarget.style.color = watching ? "#fbbf24" : "#666"; }}
+                    onMouseLeave={e => { e.currentTarget.style.color = watching ? "#f59e0b" : "#444"; }}
+                  >
+                    <Star size={18} fill={watching ? "#f59e0b" : "none"} />
+                  </button>
+                )}
+              </div>
+              
               {items.length > 0 && (
-                <div className="flex items-center gap-3 flex-wrap">
-                  <span className="text-xs px-2 py-1 rounded-lg" style={{ background: "var(--surface-2)", color: "var(--text-3)", border: "1px solid var(--border)" }}>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-xs px-2.5 py-1 rounded-md font-medium" style={{ background: "var(--surface-2)", color: "var(--text-2)", border: "1px solid var(--border)" }}>
                     {items.length} bear {items.length === 1 ? "thesis" : "theses"}
                   </span>
                   {highConvictionCount > 0 && (
-                    <span className="text-xs px-2 py-1 rounded-lg" style={{ background: "rgba(244,63,94,0.08)", color: "#f43f5e", border: "1px solid rgba(244,63,94,0.2)" }}>
+                    <span className="text-xs px-2.5 py-1 rounded-md font-medium" style={{ background: "rgba(244,63,94,0.08)", color: "#f43f5e", border: "1px solid rgba(244,63,94,0.2)" }}>
                       {highConvictionCount} high conviction
                     </span>
                   )}
-                  <span className="text-xs" style={{ color: "var(--text-3)" }}>avg {avgConviction}/10</span>
                 </div>
               )}
             </div>
+
             {avgConviction && (
-              <div className="text-right">
-                <p className="text-xs mb-1" style={{ color: "var(--text-3)" }}>Bear Bias</p>
-                <p className="text-4xl font-bold font-mono" style={{ color: scoreColor }}>{avgConviction}</p>
-                <p className="text-xs" style={{ color: "var(--text-3)" }}>/ 10</p>
+              <div className="flex flex-col items-end">
+                <p className="text-[10px] font-bold uppercase tracking-widest mb-1.5 opacity-80" style={{ color: scoreColor }}>Bear Bias</p>
+                <div className="flex items-baseline gap-1 px-3 py-1.5 rounded-xl shadow-sm transition-all" style={{ background: `${scoreColor}15`, border: `1px solid ${scoreColor}40` }}>
+                  <span className="text-3xl font-black tracking-tighter leading-none" style={{ color: scoreColor, textShadow: `0 0 20px ${scoreColor}80` }}>
+                    {avgConviction}
+                  </span>
+                  <span className="text-sm font-bold opacity-60 leading-none" style={{ color: scoreColor }}>/10</span>
+                </div>
               </div>
             )}
           </div>
