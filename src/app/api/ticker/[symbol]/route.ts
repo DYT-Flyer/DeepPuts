@@ -22,7 +22,7 @@ export async function GET(
       _count: { select: { comments: true } }, 
       votes: true 
     },
-    orderBy: [{ convictionScore: "desc" }, { createdAt: "desc" }],
+    orderBy: [{ canonicalEvent: { firstSeenAt: "desc" } }, { convictionScore: "desc" }],
     take: 50,
   });
 
