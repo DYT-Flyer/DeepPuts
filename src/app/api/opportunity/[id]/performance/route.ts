@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { computeThesisStatus, type ThesisStatus } from "@/lib/performance/calculator";
+import { toPolygonSymbol } from "@/lib/polygon/aggregates";
 
 export interface TickerPerformance {
   ticker: string;
@@ -20,15 +21,6 @@ const POLYGON_BASE = "https://api.polygon.io";
 
 function toDateStr(d: Date) {
   return d.toISOString().split("T")[0];
-}
-
-function toPolygonSymbol(ticker: string): string {
-  const cryptoMap: Record<string, string> = {
-    BTC: "X:BTCUSD", ETH: "X:ETHUSD", SOL: "X:SOLUSD",
-    DOGE: "X:DOGEUSD", ADA: "X:ADAUSD", XRP: "X:XRPUSD",
-    AVAX: "X:AVAXUSD", DOT: "X:DOTUSD", MATIC: "X:MATICUSD",
-  };
-  return cryptoMap[ticker] ?? ticker;
 }
 
 async function fetchClose(polygonSymbol: string, from: Date, to: Date, sort = "asc"): Promise<number | null> {

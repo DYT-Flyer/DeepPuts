@@ -106,9 +106,20 @@ export async function fetchPriceAt(symbol: string, date: Date): Promise<number |
   }
 }
 
+export function toPolygonSymbol(ticker: string): string {
+  if (ticker.startsWith("X:")) return ticker;
+  if (ticker.includes("/")) return `X:${ticker.replace("/", "")}`;
+  const cryptoMap: Record<string, string> = {
+    BTC: "X:BTCUSD", ETH: "X:ETHUSD", SOL: "X:SOLUSD",
+    DOGE: "X:DOGEUSD", ADA: "X:ADAUSD", XRP: "X:XRPUSD",
+    AVAX: "X:AVAXUSD", DOT: "X:DOTUSD", MATIC: "X:MATICUSD",
+  };
+  return cryptoMap[ticker] ?? ticker;
+}
+
 export async function fetchCurrentPrice(symbol: string): Promise<number | null> {
   const client = getPolygonClient();
-  const polygonSymbol = symbol.includes("/") ? `X:${symbol.replace("/", "")}` : symbol;
+  const polygonSymbol = toPolygonSymbol(symbol);
   const now = new Date();
   const from = new Date(now);
   from.setDate(from.getDate() - 7);
@@ -130,10 +141,7 @@ export async function fetchSparkline(symbol: string, days = 30): Promise<Sparkli
   const from = new Date(now);
   from.setDate(from.getDate() - days);
 
-  // For crypto symbols like BTC, convert to Polygon format
-  const polygonSymbol = symbol.includes("/")
-    ? `X:${symbol.replace("/", "")}`
-    : symbol;
+  const polygonSymbol = toPolygonSymbol(symbol);
 
   const data = await client.get<AggsResponse>(
     `/v2/aggs/ticker/${encodeURIComponent(polygonSymbol)}/range/1/hour/${toDateStr(from)}/${toDateStr(now)}`,
