@@ -50,19 +50,25 @@ export function OpportunityCard({ item, loggedIn }: Props) {
         <ConvictionBadge score={item.convictionScore} />
         <div style={{ flex: 1, minWidth: 0 }}>
           {item.event.articleUrl ? (
-            <a
-              href={item.event.articleUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={(e) => e.stopPropagation()}
-              className="text-sm font-medium leading-snug line-clamp-2 transition-colors inline"
-              style={{ color: "#d4d4d4" }}
-              onMouseEnter={e => (e.currentTarget.style.color = "#fff")}
-              onMouseLeave={e => (e.currentTarget.style.color = "#d4d4d4")}
-            >
-              {item.event.headline}
-              {domain && <span className="text-xs font-normal ml-1.5" style={{ color: "var(--text-3)" }}>{domain}</span>}
-            </a>
+            <div className="flex items-baseline flex-wrap gap-x-2 gap-y-1">
+              <a
+                href={item.event.articleUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="text-sm font-medium leading-snug line-clamp-2 transition-colors hover:underline"
+                style={{ color: "#d4d4d4" }}
+                onMouseEnter={e => (e.currentTarget.style.color = "#fff")}
+                onMouseLeave={e => (e.currentTarget.style.color = "#d4d4d4")}
+              >
+                {item.event.headline}
+              </a>
+              {domain && (
+                <span className="text-xs font-normal" style={{ color: "var(--text-3)" }}>
+                  {domain}
+                </span>
+              )}
+            </div>
           ) : (
             <p className="text-sm font-medium leading-snug line-clamp-2" style={{ color: "#d4d4d4" }}>
               {item.event.headline}
