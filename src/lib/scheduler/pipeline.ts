@@ -2,6 +2,7 @@ import prisma from "@/lib/prisma";
 import { fetchStockNews, fetchCryptoNews } from "@/lib/polygon/news";
 import { detectAnomalies } from "@/lib/polygon/aggregates";
 import { fetchRecent8KFilings } from "@/lib/sec/edgar";
+import { fetchCnbcNews } from "@/lib/cnbc/rss";
 import { analyzeEvent, PROMPT_VERSION, GEMINI_MODEL } from "@/lib/gemini/analyze";
 import { IngestionService } from "@/domain/ingestion/service";
 import { DeduplicationService } from "@/domain/resolution/service";
@@ -44,17 +45,19 @@ export async function runRefreshCycle(db: PrismaClient = prisma): Promise<void> 
     }
 
     // --- Fetch news & filings ---
-    const [stockNews, cryptoNews, secFilingsRes] = await Promise.allSettled([
+    const [stockNews, cryptoNews, secFilingsRes, cnbcNewsRes] = await Promise.allSettled([
       fetchStockNews(sinceUtc).catch((e) => { errors.push(`Stock news: ${e.message}`); return []; }),
       fetchCryptoNews(sinceUtc).catch((e) => { errors.push(`Crypto news: ${e.message}`); return []; }),
       fetchRecent8KFilings().catch((e) => { errors.push(`SEC filings: ${e.message}`); return []; }),
+      fetchCnbcNews().catch((e) => { errors.push(`CNBC news: ${e.message}`); return []; }),
     ]);
 
     const stockArticles = stockNews.status === "fulfilled" ? stockNews.value : [];
     const cryptoArticles = cryptoNews.status === "fulfilled" ? cryptoNews.value : [];
     const secFilings = secFilingsRes.status === "fulfilled" ? secFilingsRes.value : [];
+    const cnbcArticles = cnbcNewsRes.status === "fulfilled" ? cnbcNewsRes.value : [];
 
-    console.log(`[scheduler] Fetched ${stockArticles.length} stock articles, ${cryptoArticles.length} crypto articles, ${priceAnomalies.length} anomalies, ${secFilings.length} SEC filings`);
+    console.log(`[scheduler] Fetched ${stockArticles.length} stock articles, ${cryptoArticles.length} crypto articles, ${priceAnomalies.length} anomalies, ${secFilings.length} SEC filings, ${cnbcArticles.length} CNBC articles`);
 
     const ingestionService = new IngestionService(db);
     const deduplicationService = new DeduplicationService(db);
@@ -173,6 +176,43 @@ export async function runRefreshCycle(db: PrismaClient = prisma): Promise<void> 
         eventsFound++;
       } catch (err) {
         errors.push(`Store SEC event: ${(err as Error).message}`);
+      }
+    }
+
+    // CNBC Articles
+    for (const article of cnbcArticles) {
+      console.log(`[scheduler] CNBC Article: "${article.title}"`);
+      try {
+        const ingested = await ingestionService.ingestEvent({
+          provider: "cnbc",
+          source: "cnbc_rss",
+          assetClass: "stock", // Assuming general market news is stock related
+          externalId: article.id,
+          tickers: [], // Relying on Gemini analysis to extract tickers from headline/summary
+          headline: article.title,
+          summary: article.summary,
+          publishedAt: new Date(article.publishedAt),
+          rawJson: JSON.stringify(article),
+        }, ingestionRunId);
+
+        if (ingested.status === "duplicate") {
+          console.log(`   ↳ Duplicate event (skipping)`);
+          continue;
+        } else if (ingested.status === "quarantined") {
+          console.log(`   ↳ Quarantined payload: ${ingested.quarantineReason}`);
+          continue;
+        }
+
+        const canonical = await deduplicationService.resolveCanonicalEvent(ingested.id);
+        const matchLabel = canonical.isNewCanonical ? "NEW Canonical Event" : `Merged into Canonical Cluster ${canonical.canonicalEventId}`;
+        console.log(`   ↳ ${matchLabel} (Members: ${canonical.totalMembers}, Match: ${canonical.matchType})`);
+
+        if (canonical.isNewCanonical) {
+          canonicalEventIdsToAnalyze.add(canonical.canonicalEventId);
+        }
+        eventsFound++;
+      } catch (err) {
+        errors.push(`Store CNBC event: ${(err as Error).message}`);
       }
     }
 
