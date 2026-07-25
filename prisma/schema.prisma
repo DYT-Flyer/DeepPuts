@@ -402,3 +402,14 @@ model ApiUsageLog {
 
   @@index([provider, createdAt])
 }
+
+model PageView {
+  id        String   @id @default(cuid())
+  path      String
+  userAgent String?
+  userId    String?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([path])
+}

@@ -5,6 +5,7 @@ import { Providers } from "./providers";
 import { DisclaimerFooter } from "@/components/layout/disclaimer-footer";
 import { KeyboardShortcuts } from "@/components/layout/keyboard-shortcuts";
 import { OnboardingModal } from "@/components/onboarding-modal";
+import { TrafficTracker } from "@/components/traffic-tracker";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -24,6 +25,7 @@ export default function RootLayout({
         <Providers>
           <KeyboardShortcuts />
           <OnboardingModal />
+          <TrafficTracker />
           {children}
           <DisclaimerFooter />
         </Providers>

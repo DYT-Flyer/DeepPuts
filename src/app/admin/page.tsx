@@ -5,7 +5,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Nav } from "@/components/nav";
-import { RefreshCw, Play, Eye, Flag, Trash2, CheckCircle, Users } from "lucide-react";
+import { RefreshCw, Play, Eye, Flag, Trash2, CheckCircle, Users, Activity } from "lucide-react";
 
 interface SchedulerRun {
   id: string;
@@ -67,6 +67,14 @@ interface UserAdminData {
   users: UserAdminItem[];
 }
 
+interface TrafficAdminData {
+  stats: {
+    totalViews: number;
+    views24h: number;
+  };
+  topPages: Array<{ path: string; views: number }>;
+}
+
 const STATUS_DOT: Record<string, string> = {
   success: "#22c55e", partial: "#f59e0b", error: "#f43f5e", running: "#3b82f6",
 };
@@ -78,11 +86,13 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true);
   const [triggering, setTriggering] = useState<"full" | "dry" | null>(null);
   const [triggerMsg, setTriggerMsg] = useState("");
-  const [activeTab, setActiveTab] = useState<"scheduler" | "moderation" | "users">("scheduler");
+  const [activeTab, setActiveTab] = useState<"scheduler" | "moderation" | "users" | "traffic">("scheduler");
   const [flags, setFlags] = useState<ModerationFlag[]>([]);
   const [flagsLoading, setFlagsLoading] = useState(false);
   const [usersData, setUsersData] = useState<UserAdminData | null>(null);
   const [usersLoading, setUsersLoading] = useState(false);
+  const [trafficData, setTrafficData] = useState<TrafficAdminData | null>(null);
+  const [trafficLoading, setTrafficLoading] = useState(false);
 
   useEffect(() => {
     if (status === "unauthenticated") router.replace("/login");
@@ -112,11 +122,19 @@ export default function AdminPage() {
     setUsersLoading(false);
   }
 
+  async function loadTraffic() {
+    setTrafficLoading(true);
+    const res = await fetch("/api/admin/traffic");
+    if (res.ok) setTrafficData(await res.json());
+    setTrafficLoading(false);
+  }
+
   useEffect(() => { load(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (activeTab === "moderation") loadFlags();
     if (activeTab === "users") loadUsers();
+    if (activeTab === "traffic") loadTraffic();
   }, [activeTab]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function moderateAction(action: "dismiss" | "delete_comment", flagId: string, commentId?: string) {
@@ -168,7 +186,7 @@ export default function AdminPage() {
 
         {/* Tabs */}
         <div className="flex items-center gap-1 mb-8">
-          {(["scheduler", "moderation", "users"] as const).map(t => (
+          {(["scheduler", "moderation", "users", "traffic"] as const).map(t => (
             <button key={t} onClick={() => setActiveTab(t)}
               className="text-xs px-4 py-1.5 rounded-lg capitalize transition-all"
               style={{
@@ -188,7 +206,74 @@ export default function AdminPage() {
           ))}
         </div>
 
-        {activeTab === "users" ? (
+        {activeTab === "traffic" ? (
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--text-3)" }}>
+                Website Traffic
+              </h2>
+              <button onClick={loadTraffic} className="text-xs flex items-center gap-1.5 transition-colors"
+                style={{ color: "var(--text-3)", background: "none", border: "none", cursor: "pointer" }}
+              >
+                <RefreshCw size={11} className={trafficLoading ? "animate-spin" : ""} /> Refresh
+              </button>
+            </div>
+
+            <div className="grid grid-cols-2 gap-6 mb-8">
+              <div className="flex items-center justify-between px-4 py-3 rounded-xl" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+                <div>
+                  <p className="text-xs font-medium" style={{ color: "var(--text-2)" }}>Total Page Views</p>
+                  <p className="text-xs" style={{ color: "var(--text-3)" }}>all time</p>
+                </div>
+                <p className="text-2xl font-bold font-mono" style={{ color: "var(--text)" }}>
+                  {trafficLoading || !trafficData ? "—" : trafficData.stats.totalViews}
+                </p>
+              </div>
+              <div className="flex items-center justify-between px-4 py-3 rounded-xl" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+                <div>
+                  <p className="text-xs font-medium" style={{ color: "var(--text-2)" }}>Recent Views</p>
+                  <p className="text-xs" style={{ color: "var(--text-3)" }}>last 24h</p>
+                </div>
+                <p className="text-2xl font-bold font-mono" style={{ color: "var(--text)" }}>
+                  {trafficLoading || !trafficData ? "—" : trafficData.stats.views24h}
+                </p>
+              </div>
+            </div>
+
+            <div className="rounded-xl overflow-hidden" style={{ border: "1px solid var(--border)", background: "var(--surface)" }}>
+              {trafficLoading ? (
+                <div className="p-5 space-y-3">
+                  {[1,2,3,4,5].map(i => <div key={i} className="h-8 rounded animate-pulse" style={{ background: "var(--surface-2)" }} />)}
+                </div>
+              ) : !trafficData?.topPages.length ? (
+                <div className="p-8 text-center">
+                  <Activity size={24} style={{ color: "var(--text-3)", margin: "0 auto 12px" }} />
+                  <p className="text-sm" style={{ color: "var(--text-3)" }}>No traffic recorded yet</p>
+                </div>
+              ) : (
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr style={{ borderBottom: "1px solid var(--border)" }}>
+                      <th className="px-4 py-3 text-left font-medium" style={{ color: "var(--text-3)" }}>Page Path</th>
+                      <th className="px-4 py-3 text-left font-medium" style={{ color: "var(--text-3)" }}>Total Views</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {trafficData.topPages.map((p, i) => (
+                      <tr key={p.path} style={{ borderBottom: i < trafficData.topPages.length - 1 ? "1px solid var(--border)" : "none" }}
+                        onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,0.02)")}
+                        onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+                      >
+                        <td className="px-4 py-3 font-mono" style={{ color: "var(--text-2)" }}>{p.path}</td>
+                        <td className="px-4 py-3 font-mono" style={{ color: "var(--text-2)" }}>{p.views}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
+        ) : activeTab === "users" ? (
           <div>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--text-3)" }}>
