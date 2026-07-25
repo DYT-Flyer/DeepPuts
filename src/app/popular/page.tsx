@@ -4,14 +4,12 @@ import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { Nav } from "@/components/nav";
 import { OpportunityCard } from "@/components/opportunity-card";
-import { RefreshCw } from "lucide-react";
 import type { OpportunityItem } from "@/types";
 
 export default function PopularPage() {
   const { data: session } = useSession();
   const [items, setItems] = useState<OpportunityItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
 
   async function loadData() {
     setLoading(true);
@@ -30,12 +28,6 @@ export default function PopularPage() {
     loadData();
   }, []);
 
-  async function handleRefresh() {
-    setRefreshing(true);
-    await loadData();
-    setRefreshing(false);
-  }
-
   return (
     <div className="min-h-screen" style={{ background: "var(--bg)", color: "var(--text)" }}>
       <Nav userEmail={session?.user?.email} userName={session?.user?.name} />
@@ -48,21 +40,6 @@ export default function PopularPage() {
               The most debated and upvoted analyses from the community.
             </p>
           </div>
-          <button
-            onClick={handleRefresh}
-            disabled={refreshing || loading}
-            className="flex items-center gap-2 text-sm px-4 py-2 rounded-lg transition-all"
-            style={{
-              background: "var(--surface)",
-              border: "1px solid var(--border)",
-              color: "var(--text-2)",
-              cursor: refreshing || loading ? "not-allowed" : "pointer",
-              opacity: refreshing || loading ? 0.5 : 1
-            }}
-          >
-            <RefreshCw size={14} className={refreshing ? "animate-spin" : ""} />
-            Refresh
-          </button>
         </div>
 
         {loading && items.length === 0 ? (
