@@ -5,7 +5,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Nav } from "@/components/nav";
-import { RefreshCw, Play, Eye, Flag, Trash2, CheckCircle } from "lucide-react";
+import { RefreshCw, Play, Eye, Flag, Trash2, CheckCircle, Users } from "lucide-react";
 
 interface SchedulerRun {
   id: string;
@@ -48,6 +48,25 @@ interface ModerationFlag {
   } | null;
 }
 
+interface UserAdminItem {
+  id: string;
+  email: string;
+  name: string | null;
+  role: string;
+  createdAt: string;
+  onboardedAt: string | null;
+  commentsCount: number;
+  votesCount: number;
+}
+
+interface UserAdminData {
+  stats: {
+    totalUsers: number;
+    users24h: number;
+  };
+  users: UserAdminItem[];
+}
+
 const STATUS_DOT: Record<string, string> = {
   success: "#22c55e", partial: "#f59e0b", error: "#f43f5e", running: "#3b82f6",
 };
@@ -59,9 +78,11 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true);
   const [triggering, setTriggering] = useState<"full" | "dry" | null>(null);
   const [triggerMsg, setTriggerMsg] = useState("");
-  const [activeTab, setActiveTab] = useState<"scheduler" | "moderation">("scheduler");
+  const [activeTab, setActiveTab] = useState<"scheduler" | "moderation" | "users">("scheduler");
   const [flags, setFlags] = useState<ModerationFlag[]>([]);
   const [flagsLoading, setFlagsLoading] = useState(false);
+  const [usersData, setUsersData] = useState<UserAdminData | null>(null);
+  const [usersLoading, setUsersLoading] = useState(false);
 
   useEffect(() => {
     if (status === "unauthenticated") router.replace("/login");
@@ -84,10 +105,18 @@ export default function AdminPage() {
     setFlagsLoading(false);
   }
 
+  async function loadUsers() {
+    setUsersLoading(true);
+    const res = await fetch("/api/admin/users");
+    if (res.ok) setUsersData(await res.json());
+    setUsersLoading(false);
+  }
+
   useEffect(() => { load(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (activeTab === "moderation") loadFlags();
+    if (activeTab === "users") loadUsers();
   }, [activeTab]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function moderateAction(action: "dismiss" | "delete_comment", flagId: string, commentId?: string) {
@@ -139,7 +168,7 @@ export default function AdminPage() {
 
         {/* Tabs */}
         <div className="flex items-center gap-1 mb-8">
-          {(["scheduler", "moderation"] as const).map(t => (
+          {(["scheduler", "moderation", "users"] as const).map(t => (
             <button key={t} onClick={() => setActiveTab(t)}
               className="text-xs px-4 py-1.5 rounded-lg capitalize transition-all"
               style={{
@@ -159,7 +188,91 @@ export default function AdminPage() {
           ))}
         </div>
 
-        {activeTab === "moderation" ? (
+        {activeTab === "users" ? (
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--text-3)" }}>
+                Users
+              </h2>
+              <button onClick={loadUsers} className="text-xs flex items-center gap-1.5 transition-colors"
+                style={{ color: "var(--text-3)", background: "none", border: "none", cursor: "pointer" }}
+              >
+                <RefreshCw size={11} className={usersLoading ? "animate-spin" : ""} /> Refresh
+              </button>
+            </div>
+
+            <div className="grid grid-cols-2 gap-6 mb-8">
+              <div className="flex items-center justify-between px-4 py-3 rounded-xl" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+                <div>
+                  <p className="text-xs font-medium" style={{ color: "var(--text-2)" }}>Total Users</p>
+                  <p className="text-xs" style={{ color: "var(--text-3)" }}>all time</p>
+                </div>
+                <p className="text-2xl font-bold font-mono" style={{ color: "var(--text)" }}>
+                  {usersLoading || !usersData ? "—" : usersData.stats.totalUsers}
+                </p>
+              </div>
+              <div className="flex items-center justify-between px-4 py-3 rounded-xl" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+                <div>
+                  <p className="text-xs font-medium" style={{ color: "var(--text-2)" }}>New Users</p>
+                  <p className="text-xs" style={{ color: "var(--text-3)" }}>last 24h</p>
+                </div>
+                <p className="text-2xl font-bold font-mono" style={{ color: "var(--text)" }}>
+                  {usersLoading || !usersData ? "—" : usersData.stats.users24h}
+                </p>
+              </div>
+            </div>
+
+            <div className="rounded-xl overflow-hidden" style={{ border: "1px solid var(--border)", background: "var(--surface)" }}>
+              {usersLoading ? (
+                <div className="p-5 space-y-3">
+                  {[1,2,3,4,5].map(i => <div key={i} className="h-8 rounded animate-pulse" style={{ background: "var(--surface-2)" }} />)}
+                </div>
+              ) : !usersData?.users.length ? (
+                <div className="p-8 text-center">
+                  <Users size={24} style={{ color: "var(--text-3)", margin: "0 auto 12px" }} />
+                  <p className="text-sm" style={{ color: "var(--text-3)" }}>No users found</p>
+                </div>
+              ) : (
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr style={{ borderBottom: "1px solid var(--border)" }}>
+                      {["User", "Role", "Joined", "Comments", "Votes"].map(h => (
+                        <th key={h} className="px-4 py-3 text-left font-medium" style={{ color: "var(--text-3)" }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {usersData.users.map((u, i) => (
+                      <tr key={u.id} style={{ borderBottom: i < usersData.users.length - 1 ? "1px solid var(--border)" : "none" }}
+                        onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,0.02)")}
+                        onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+                      >
+                        <td className="px-4 py-3">
+                          <div className="font-medium" style={{ color: "var(--text)" }}>{u.name || "Anonymous"}</div>
+                          <div style={{ color: "var(--text-3)" }}>{u.email}</div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className="px-2 py-0.5 rounded-full capitalize" style={{ 
+                            background: u.role === "admin" ? "rgba(244,63,94,0.1)" : "var(--surface-2)",
+                            color: u.role === "admin" ? "#f43f5e" : "var(--text-2)",
+                            border: `1px solid ${u.role === "admin" ? "rgba(244,63,94,0.2)" : "var(--border)"}`
+                          }}>
+                            {u.role}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 font-mono" style={{ color: "var(--text-2)" }}>
+                          {new Date(u.createdAt).toLocaleDateString()}
+                        </td>
+                        <td className="px-4 py-3 font-mono" style={{ color: "var(--text-2)" }}>{u.commentsCount}</td>
+                        <td className="px-4 py-3 font-mono" style={{ color: "var(--text-2)" }}>{u.votesCount}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
+        ) : activeTab === "moderation" ? (
           <div>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--text-3)" }}>
