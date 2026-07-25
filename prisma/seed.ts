@@ -10,16 +10,21 @@ async function main() {
 
   const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) {
-    console.log(`User ${email} already exists`);
+    if (existing.role !== "admin") {
+      await prisma.user.update({ where: { email }, data: { role: "admin" } });
+      console.log(`Updated user ${email} to have the admin role.`);
+    } else {
+      console.log(`User ${email} already exists and is an admin.`);
+    }
     return;
   }
 
   const passwordHash = await bcrypt.hash(password, 12);
   await prisma.user.create({
-    data: { email, passwordHash, name: "Admin" },
+    data: { email, passwordHash, name: "Admin", role: "admin" },
   });
 
-  console.log(`Created user: ${email} / ${password}`);
+  console.log(`Created admin user: ${email} / ${password}`);
 
   // Seed some mock events + analyses for UI development
   const mockEvents = [
