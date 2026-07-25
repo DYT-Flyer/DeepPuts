@@ -36,9 +36,6 @@ export default function PopularPage() {
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Popular</h1>
-            <p className="text-sm mt-1" style={{ color: "var(--text-3)" }}>
-              The most debated and upvoted analyses from the community.
-            </p>
           </div>
         </div>
 
