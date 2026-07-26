@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { Search } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ThemeSwitcher } from "./theme-switcher";
 
 interface Props {
   userEmail?: string | null;
@@ -55,6 +56,7 @@ export function Nav({ userEmail, userName }: Props) {
           </button>
 
           <div className="nav-auth desktop-only">
+            <ThemeSwitcher />
             {userEmail ? (
               <>
                 <Link href="/profile" className="nav-auth-user">

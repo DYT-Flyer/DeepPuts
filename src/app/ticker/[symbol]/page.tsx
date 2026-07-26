@@ -143,10 +143,21 @@ export default function TickerPage({ params }: { params: Promise<{ symbol: strin
             </div>
 
             {avgConviction && (
-              <div className="flex items-center">
-                <span className="text-2xl font-bold tracking-tight" style={{ color: scoreColor, textShadow: `0 0 15px ${scoreColor}80` }}>
-                  Bear Bias: {avgConviction}/10
+              <div className="flex flex-col items-end">
+                <span className="text-[10px] font-bold uppercase tracking-[0.2em] mb-1 opacity-70" style={{ color: scoreColor }}>
+                  Bear Bias
                 </span>
+                <div 
+                  className="px-4 py-1.5 rounded-xl font-mono text-2xl font-bold flex items-center gap-1.5"
+                  style={{ 
+                    color: "#fff", 
+                    background: `linear-gradient(135deg, ${scoreColor}, ${scoreColor}80)`,
+                    boxShadow: `0 8px 24px -8px ${scoreColor}`,
+                    border: `1px solid ${scoreColor}40`
+                  }}
+                >
+                  {avgConviction}<span className="text-sm opacity-60">/10</span>
+                </div>
               </div>
             )}
           </div>

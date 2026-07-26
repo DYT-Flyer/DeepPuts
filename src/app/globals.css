@@ -4,19 +4,36 @@
 
 @layer base {
   :root {
+    /* Default is dark mode because the app was built dark-first */
     --bg: #080808;
     --surface: #101010;
     --surface-2: #161616;
     --border: #1e1e1e;
     --border-hover: #2a2a2a;
     --text: #f0f0f0;
-    --text-2: #888;
-    --text-3: #444;
+    --text-2: #a3a3a3;
+    --text-3: #737373;
     --red: #f43f5e;
     --red-dim: rgba(244, 63, 94, 0.12);
     --amber: #f59e0b;
     --amber-dim: rgba(245, 158, 11, 0.12);
     --green: #22c55e;
+  }
+
+  .light {
+    --bg: #ffffff;
+    --surface: #f8f9fa;
+    --surface-2: #f1f3f5;
+    --border: #e9ecef;
+    --border-hover: #dee2e6;
+    --text: #212529;
+    --text-2: #495057;
+    --text-3: #868e96;
+    --red: #e11d48;
+    --red-dim: rgba(225, 29, 72, 0.1);
+    --amber: #d97706;
+    --amber-dim: rgba(217, 119, 6, 0.1);
+    --green: #16a34a;
   }
 }
 
