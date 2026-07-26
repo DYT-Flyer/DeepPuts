@@ -93,6 +93,7 @@ export default function AdminPage() {
   const [usersLoading, setUsersLoading] = useState(false);
   const [trafficData, setTrafficData] = useState<TrafficAdminData | null>(null);
   const [trafficLoading, setTrafficLoading] = useState(false);
+  const [trafficError, setTrafficError] = useState<string | null>(null);
 
   useEffect(() => {
     if (status === "unauthenticated") router.replace("/login");
@@ -124,9 +125,20 @@ export default function AdminPage() {
 
   async function loadTraffic() {
     setTrafficLoading(true);
-    const res = await fetch("/api/admin/traffic");
-    if (res.ok) setTrafficData(await res.json());
-    setTrafficLoading(false);
+    setTrafficError(null);
+    try {
+      const res = await fetch("/api/admin/traffic");
+      if (res.ok) {
+        setTrafficData(await res.json());
+      } else {
+        const errorData = await res.json().catch(() => ({}));
+        setTrafficError(errorData.error || `HTTP ${res.status}`);
+      }
+    } catch (e: any) {
+      setTrafficError(e.message);
+    } finally {
+      setTrafficLoading(false);
+    }
   }
 
   useEffect(() => { load(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -212,11 +224,14 @@ export default function AdminPage() {
               <h2 className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--text-3)" }}>
                 Website Traffic
               </h2>
-              <button onClick={loadTraffic} className="text-xs flex items-center gap-1.5 transition-colors"
-                style={{ color: "var(--text-3)", background: "none", border: "none", cursor: "pointer" }}
-              >
-                <RefreshCw size={11} className={trafficLoading ? "animate-spin" : ""} /> Refresh
-              </button>
+              <div className="flex items-center gap-3">
+                {trafficError && <span className="text-xs text-red-500 font-medium">Error: {trafficError}</span>}
+                <button onClick={loadTraffic} className="text-xs flex items-center gap-1.5 transition-colors"
+                  style={{ color: "var(--text-3)", background: "none", border: "none", cursor: "pointer" }}
+                >
+                  <RefreshCw size={11} className={trafficLoading ? "animate-spin" : ""} /> Refresh
+                </button>
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-6 mb-8">
