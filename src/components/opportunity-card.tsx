@@ -29,7 +29,7 @@ export function OpportunityCard({ item, loggedIn }: Props) {
         border: "1px solid var(--border)",
         cursor: "pointer"
       }}
-      onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--border-hover)"; e.currentTarget.style.background = "var(--surface-2)"; }}
+      onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--border-hover)"; e.currentTarget.style.background = "var(--surface-hover)"; }}
       onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.background = "var(--surface)"; }}
     >
       {/* Age + Catalyst */}

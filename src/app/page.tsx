@@ -150,8 +150,8 @@ function DashboardRow({ item, loggedIn }: { item: DashboardTopItem; loggedIn: bo
       onClick={() => router.push(`/opportunity/${item.id}#comments`)}
       className="rounded-xl px-4 py-4 transition-all cursor-pointer"
       style={{ background: "var(--surface)", border: "1px solid var(--border)", cursor: "pointer" }}
-      onMouseEnter={e => (e.currentTarget.style.borderColor = "var(--border-hover)")}
-      onMouseLeave={e => (e.currentTarget.style.borderColor = "var(--border)")}
+      onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--border-hover)"; e.currentTarget.style.background = "var(--surface-hover)"; }}
+      onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.background = "var(--surface)"; }}
     >
       <div className="flex-1 min-w-0">
         <div style={{ display: "flex", alignItems: "flex-start", gap: "10px", marginBottom: "4px" }}>

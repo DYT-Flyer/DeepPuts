@@ -8,6 +8,7 @@
     --bg: #080808;
     --surface: #101010;
     --surface-2: #161616;
+    --surface-hover: #1f1f1f;
     --border: #1e1e1e;
     --border-hover: #2a2a2a;
     --text: #f0f0f0;
@@ -24,6 +25,7 @@
     --bg: #ffffff;
     --surface: #f8f9fa;
     --surface-2: #f1f3f5;
+    --surface-hover: #e9ecef;
     --border: #e9ecef;
     --border-hover: #dee2e6;
     --text: #212529;
