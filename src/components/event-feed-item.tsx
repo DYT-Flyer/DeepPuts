@@ -22,8 +22,8 @@ export function EventFeedRow({ item, loggedIn }: Props) {
       onClick={() => isAnalyzed ? router.push(`/opportunity/${item.analysis!.id}#comments`) : null}
       className={`rounded-xl px-4 py-4 transition-all mb-3 ${isAnalyzed ? "cursor-pointer" : ""}`}
       style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
-      onMouseEnter={e => { if (isAnalyzed) e.currentTarget.style.borderColor = "var(--border-hover)"; }}
-      onMouseLeave={e => { if (isAnalyzed) e.currentTarget.style.borderColor = "var(--border)"; }}
+      onMouseEnter={e => { if (isAnalyzed) { e.currentTarget.style.borderColor = "var(--border-hover)"; e.currentTarget.style.background = "var(--surface-2)"; } }}
+      onMouseLeave={e => { if (isAnalyzed) { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.background = "var(--surface)"; } }}
     >
       <div style={{ display: "flex", alignItems: "flex-start", gap: "10px", marginBottom: "4px" }}>
         {item.analysis ? (
@@ -39,10 +39,13 @@ export function EventFeedRow({ item, loggedIn }: Props) {
               <>
                 <a href={item.articleUrl} target="_blank" rel="noopener noreferrer"
                   onClick={(e) => e.stopPropagation()}
-                  className="text-sm font-medium transition-colors hover:underline"
-                  style={{ color: "#fff" }}
+                  className="text-sm font-medium transition-colors hover:underline inline-flex items-center gap-1.5"
+                  style={{ color: "var(--text)" }}
+                  onMouseEnter={e => (e.currentTarget.style.color = "var(--red)")}
+                  onMouseLeave={e => (e.currentTarget.style.color = "var(--text)")}
                 >
                   {item.headline}
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, opacity: 0.5 }}><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
                 </a>
                 {getDomain(item.articleUrl) && (
                   <>
