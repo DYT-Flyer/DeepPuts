@@ -185,20 +185,25 @@ export default function OpportunityPage({ params }: { params: Promise<{ id: stri
                         {data.event.headline}
                       </a>
                       {getDomain(data.event.articleUrl) && (
-                        <span className="inline-flex items-center gap-1.5 ml-2">
-                          <span className="text-sm font-normal" style={{ color: "var(--text-3)" }}>
-                            {getDomain(data.event.articleUrl)}
+                        <>
+                          {" "}
+                          <span className="inline-flex items-center gap-1.5 ml-2">
+                            <span className="text-sm font-normal" style={{ color: "var(--text-3)" }}>
+                              {getDomain(data.event.articleUrl)}
+                            </span>
+                            <ExternalLink size={13} style={{ flexShrink: 0, color: "#555" }} />
                           </span>
-                          <ExternalLink size={13} style={{ flexShrink: 0, color: "#555" }} />
-                        </span>
+                        </>
                       )}
                     </div>
                   ) : (
                     <p className="text-base font-semibold leading-snug" style={{ color: "#fff" }}>{data.event.headline}</p>
                   )}
-                  <p className="text-xs mt-1" style={{ color: "var(--text-3)" }}>
-                    {formatAge(data.event.publishedAt)} · {data.event.source}
-                  </p>
+                </div>
+                
+                {/* Timestamp moved to far right */}
+                <div className="text-xs whitespace-nowrap text-right pt-0.5" style={{ color: "var(--text-3)", flexShrink: 0 }}>
+                  {formatAge(data.event.publishedAt)}
                 </div>
               </div>
 
