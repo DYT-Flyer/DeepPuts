@@ -149,7 +149,7 @@ function DashboardRow({ item, loggedIn }: { item: DashboardTopItem; loggedIn: bo
     <div
       onClick={() => router.push(`/opportunity/${item.id}#comments`)}
       className="rounded-xl px-4 py-4 transition-all cursor-pointer"
-      style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
+      style={{ background: "var(--surface)", border: "1px solid var(--border)", cursor: "pointer" }}
       onMouseEnter={e => (e.currentTarget.style.borderColor = "var(--border-hover)")}
       onMouseLeave={e => (e.currentTarget.style.borderColor = "var(--border)")}
     >

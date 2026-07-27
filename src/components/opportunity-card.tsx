@@ -27,6 +27,7 @@ export function OpportunityCard({ item, loggedIn }: Props) {
       style={{
         background: "var(--surface)",
         border: "1px solid var(--border)",
+        cursor: "pointer"
       }}
       onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--border-hover)"; e.currentTarget.style.background = "var(--surface-2)"; }}
       onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.background = "var(--surface)"; }}

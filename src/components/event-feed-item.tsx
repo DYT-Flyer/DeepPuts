@@ -21,7 +21,7 @@ export function EventFeedRow({ item, loggedIn }: Props) {
     <div
       onClick={() => isAnalyzed ? router.push(`/opportunity/${item.analysis!.id}#comments`) : null}
       className={`rounded-xl px-4 py-4 transition-all mb-3 ${isAnalyzed ? "cursor-pointer" : ""}`}
-      style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
+      style={{ background: "var(--surface)", border: "1px solid var(--border)", cursor: isAnalyzed ? "pointer" : "default" }}
       onMouseEnter={e => { if (isAnalyzed) { e.currentTarget.style.borderColor = "var(--border-hover)"; e.currentTarget.style.background = "var(--surface-2)"; } }}
       onMouseLeave={e => { if (isAnalyzed) { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.background = "var(--surface)"; } }}
     >
