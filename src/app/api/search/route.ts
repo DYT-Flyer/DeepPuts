@@ -8,15 +8,59 @@ export async function GET(req: NextRequest) {
   const q = req.nextUrl.searchParams.get("q")?.trim();
   if (!q || q.length < 2) return NextResponse.json({ opportunities: [], events: [] });
 
+  // 1. Fetch SEC company tickers to map company names to tickers
+  let companyTickers: string[] = [];
+  try {
+    const secRes = await fetch("https://www.sec.gov/files/company_tickers.json", {
+      next: { revalidate: 86400 }, // Cache for 24 hours
+      headers: { "User-Agent": "DeepPutsApp admin@deepputs.com" },
+    });
+    if (secRes.ok) {
+      const data = await secRes.json() as Record<string, { ticker: string; title: string }>;
+      const qLower = q.toLowerCase();
+      // Find tickers where company name includes the query (e.g. "Apple" -> "AAPL")
+      for (const val of Object.values(data)) {
+        if (val.title.toLowerCase().includes(qLower) || val.ticker.toLowerCase() === qLower) {
+          companyTickers.push(val.ticker);
+          if (companyTickers.length >= 10) break; // limit to top 10 matches
+        }
+      }
+    }
+  } catch (e) {
+    console.warn("Failed to fetch SEC tickers for search", e);
+  }
+
+  // 2. Split query into terms for more flexible matching (AND logic for terms)
+  const terms = q.split(/\s+/).filter(t => t.length > 0);
+
+  // Helper to build AND clauses for a specific text field
+  const buildContainsAnd = (field: string) => ({
+    AND: terms.map(term => ({
+      [field]: { contains: term }
+    }))
+  });
+
+  // Helper for related relation
+  const buildRelationContainsAnd = (relation: string, field: string) => ({
+    [relation]: {
+      AND: terms.map(term => ({
+        [field]: { contains: term }
+      }))
+    }
+  });
+
+  // Include mapped tickers in the ticker search
+  const tickerQueries = [q.toUpperCase(), ...companyTickers];
+
   const [analyses, events] = await Promise.all([
     prisma.analysis.findMany({
       where: {
         OR: [
-          { bearThesis: { contains: q } },
-          { affectedTickers: { contains: q.toUpperCase() } },
-          { canonicalEvent: { primaryHeadline: { contains: q } } },
-          { canonicalEvent: { summary: { contains: q } } },
-          { sector: { contains: q } },
+          buildContainsAnd("bearThesis"),
+          ...tickerQueries.map(t => ({ affectedTickers: { contains: t } })),
+          buildRelationContainsAnd("canonicalEvent", "primaryHeadline"),
+          buildRelationContainsAnd("canonicalEvent", "summary"),
+          buildContainsAnd("sector"),
         ],
       },
       include: { 
@@ -29,11 +73,11 @@ export async function GET(req: NextRequest) {
     }),
     prisma.rawEvent.findMany({
       where: {
-        canonicalEvent: { is: { analysis: null } }, // only events without analysis (avoid duplicates)
+        canonicalEvent: { is: { analysis: null } },
         OR: [
-          { headline: { contains: q } },
-          { summary: { contains: q } },
-          { tickers: { contains: q.toUpperCase() } },
+          buildContainsAnd("headline"),
+          buildContainsAnd("summary"),
+          ...tickerQueries.map(t => ({ tickers: { contains: t } })),
         ],
       },
       take: 20,
@@ -79,6 +123,12 @@ export async function GET(req: NextRequest) {
 
   const tickerFrequencies = new Map<string, number>();
   const upperQ = q.toUpperCase();
+  
+  // Give mapped company tickers a large boost so they show up in suggestions!
+  for (const t of companyTickers) {
+    tickerFrequencies.set(t, 100);
+  }
+  
   if (/^[A-Z0-9.\-]+$/.test(upperQ)) {
     tickerFrequencies.set(upperQ, 100); // Give exact ticker matches a huge boost
   }
