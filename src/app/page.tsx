@@ -24,7 +24,7 @@ interface DashboardStats {
   lastRun: { status: string; startedAt: string; finishedAt: string | null; eventsFound: number; eventsAnalyzed: number; errorMessage: string | null } | null;
   recentTop: DashboardTopItem[];
   assetBreakdown: Array<{ assetClass: string; count: number }>;
-  trendingTickers: Array<{ ticker: string; count: number }>;
+  trendingTickers: Array<{ ticker: string; count: number; bearBias: number }>;
 }
 
 const STATUS_DOT: Record<string, string> = {
@@ -34,10 +34,8 @@ const STATUS_DOT: Record<string, string> = {
 export default function DashboardPage() {
   const { data: session } = useSession();
   const [data, setData] = useState<DashboardStats | null>(null);
-  const [quotes, setQuotes] = useState<Record<string, { change: number; changePerc: number }>>({});
   const [loading, setLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
-
   useEffect(() => {
     setMounted(true);
     const loadData = () => {
@@ -47,16 +45,6 @@ export default function DashboardPage() {
     const interval = setInterval(loadData, 30000); // Auto-update every 30s
     return () => clearInterval(interval);
   }, []);
-
-  useEffect(() => {
-    if (data?.trendingTickers?.length) {
-      const tickers = data.trendingTickers.map(t => t.ticker).join(",");
-      fetch(`/api/quotes?tickers=${tickers}`)
-        .then(r => r.json())
-        .then(q => setQuotes(q))
-        .catch(console.error);
-    }
-  }, [data?.trendingTickers]);
 
   if (!mounted) return null;
 
@@ -71,13 +59,11 @@ export default function DashboardPage() {
           <div className="mb-8 trending-section">
             <h2 className="text-xs font-semibold uppercase tracking-widest mb-3 trending-title" style={{ color: "var(--text-3)" }}>Trending</h2>
             <div className="trending-container">
-              {data.trendingTickers.map(({ ticker, count }) => {
-                const quote = quotes[ticker];
+              {data.trendingTickers.map(({ ticker, count, bearBias }) => {
                 let trendClass = "";
-                if (quote) {
-                  if (quote.change > 0) trendClass = " up";
-                  else if (quote.change < 0) trendClass = " down";
-                }
+                if (bearBias >= 7) trendClass = " down"; // Red for high bear conviction
+                else if (bearBias >= 4) trendClass = " mid"; // Orange for mid conviction
+                
                 return (
                   <Link key={ticker} href={`/ticker/${ticker}`} className={`trending-tag${trendClass}`}>
                     <span className="trending-ticker">{ticker}</span>

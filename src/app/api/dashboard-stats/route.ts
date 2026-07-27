@@ -37,21 +37,24 @@ export async function GET() {
   const sinceDate = new Date(Date.now() - 24 * 60 * 60 * 1000);
   const recentAnalyses = await prisma.analysis.findMany({
     where: { createdAt: { gte: sinceDate } },
-    select: { affectedTickers: true },
+    select: { affectedTickers: true, convictionScore: true },
   });
-  const tickerCounts = new Map<string, number>();
+  const tickerStats = new Map<string, { count: number, sumScore: number }>();
   for (const a of recentAnalyses) {
     for (const t of JSON.parse(a.affectedTickers) as string[]) {
       // Only include actual tickers (all caps, numbers, hyphens, dots), exclude sectors (which have lowercase)
       if (/^[A-Z0-9.\-]+$/.test(t)) {
-        tickerCounts.set(t, (tickerCounts.get(t) ?? 0) + 1);
+        const stats = tickerStats.get(t) ?? { count: 0, sumScore: 0 };
+        stats.count += 1;
+        stats.sumScore += a.convictionScore;
+        tickerStats.set(t, stats);
       }
     }
   }
-  const trendingTickers = [...tickerCounts.entries()]
-    .sort((a, b) => b[1] - a[1])
+  const trendingTickers = [...tickerStats.entries()]
+    .sort((a, b) => b[1].count - a[1].count)
     .slice(0, 12)
-    .map(([ticker, count]) => ({ ticker, count }));
+    .map(([ticker, stats]) => ({ ticker, count: stats.count, bearBias: stats.sumScore / stats.count }));
 
   const analysisIds = recentTop.map((a) => a.id);
   const [voteSums, userVotes] = await Promise.all([
