@@ -80,9 +80,11 @@ export async function GET(
       publishedAt: a.canonicalEvent.firstSeenAt.toISOString(),
       assetClass: a.canonicalEvent.assetClass,
       source: "polygon_news",
-      articleUrl: a.canonicalEvent.rawEvents?.[0]?.rawJson
-        ? (JSON.parse(a.canonicalEvent.rawEvents[0].rawJson) as { article_url?: string }).article_url ?? null
-        : null,
+      articleUrl: (() => {
+        if (!a.canonicalEvent.rawEvents?.[0]?.rawJson) return null;
+        const parsed = JSON.parse(a.canonicalEvent.rawEvents[0].rawJson) as { article_url?: string; link?: string; url?: string };
+        return parsed.article_url || parsed.link || parsed.url || null;
+      })(),
     },
     comments: a.comments.map(serializeComment),
   });

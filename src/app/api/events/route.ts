@@ -38,7 +38,10 @@ export async function GET(req: NextRequest) {
     publishedAt: e.publishedAt.toISOString(),
     assetClass: e.assetClass as "stock" | "crypto",
     tickers: JSON.parse(e.tickers) as string[],
-    articleUrl: (JSON.parse(e.rawJson) as { article_url?: string }).article_url ?? null,
+    articleUrl: (() => {
+      const parsed = JSON.parse(e.rawJson) as { article_url?: string; link?: string; url?: string };
+      return parsed.article_url || parsed.link || parsed.url || null;
+    })(),
     analysis: e.canonicalEvent?.analysis
       ? {
           id: e.canonicalEvent?.analysis.id,
