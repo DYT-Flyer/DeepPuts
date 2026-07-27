@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { ConvictionBadge } from "./conviction-badge";
 import { SignalBadge } from "./signal-badge";
 import { VoteButtons } from "./social/vote-buttons";
+import { CardPerformance } from "./card-performance";
 import { getDomain, formatAge } from "@/lib/utils";
 import type { EventFeedItem } from "@/types";
 
@@ -92,6 +93,9 @@ export function EventFeedRow({ item, loggedIn }: Props) {
             </Link>
           </span>
         ))}
+        {item.analysis && item.tickers.length > 0 && (
+          <CardPerformance opportunityId={item.analysis.id} />
+        )}
         {item.analysis && (
           <>
             <span style={{ flex: 1 }} />

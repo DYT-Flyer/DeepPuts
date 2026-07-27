@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ConvictionBadge } from "./conviction-badge";
 import { SignalBadge } from "./signal-badge";
 import { VoteButtons } from "./social/vote-buttons";
+import { CardPerformance } from "./card-performance";
 import type { OpportunityItem } from "@/types";
 import { useRouter } from "next/navigation";
 import { formatCatalyst, getDomain } from "@/lib/utils";
@@ -112,6 +113,9 @@ export function OpportunityCard({ item, loggedIn }: Props) {
             </Link>
           </span>
         ))}
+        {item.affectedTickers.length > 0 && (
+          <CardPerformance opportunityId={item.id} />
+        )}
         {item.affectedTickers.length > 6 && (
           <span className="text-xs" style={{ color: "var(--text-3)" }}>+{item.affectedTickers.length - 6}</span>
         )}

@@ -24,19 +24,27 @@ function toDateStr(d: Date) {
 
 async function fetchClose(yahooSymbol: string, from: Date, to: Date, sort = "asc"): Promise<number | null> {
   try {
-    const results: any = await yahooFinance.historical(yahooSymbol, {
-      period1: toDateStr(from),
-      period2: toDateStr(to),
-      interval: "1d"
-    });
+    const period1 = Math.floor(from.getTime() / 1000);
+    const period2 = Math.floor(to.getTime() / 1000);
+    const res = await fetch(`https://query2.finance.yahoo.com/v8/finance/chart/${yahooSymbol}?period1=${period1}&period2=${period2}&interval=1d`);
+    if (!res.ok) return null;
     
-    if (!results || results.length === 0) return null;
+    const data = await res.json();
+    const result = data?.chart?.result?.[0];
+    if (!result) return null;
+    
+    const closes = result.indicators?.quote?.[0]?.close as (number | null)[];
+    if (!closes || closes.length === 0) return null;
+    
+    const validCloses = closes.filter((c): c is number => c !== null);
+    if (validCloses.length === 0) return null;
     
     if (sort === "desc") {
-      return results[results.length - 1].close ?? null;
+      return validCloses[validCloses.length - 1];
     }
-    return results[0].close ?? null;
-  } catch {
+    return validCloses[0];
+  } catch (err) {
+    console.error("fetchClose error:", err);
     return null;
   }
 }
