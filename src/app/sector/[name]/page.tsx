@@ -93,7 +93,6 @@ export default function SectorPage({ params }: { params: Promise<{ name: string 
                 <div className="flex items-center gap-3 mb-3">
                   <h2 className="text-xs font-semibold uppercase tracking-widest" style={{ color: "#f43f5e" }}>High Conviction</h2>
                   <div className="flex-1 h-px" style={{ background: "rgba(244,63,94,0.15)" }} />
-                  <span className="text-xs" style={{ color: "var(--text-3)" }}>{highConviction.length}</span>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
                   {highConviction.map(item => <OpportunityCard key={item.id} item={item} loggedIn={!!session} />)}
@@ -105,7 +104,6 @@ export default function SectorPage({ params }: { params: Promise<{ name: string 
                 <div className="flex items-center gap-3 mb-3">
                   <h2 className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--text-3)" }}>Monitoring</h2>
                   <div className="flex-1 h-px" style={{ background: "var(--border)" }} />
-                  <span className="text-xs" style={{ color: "var(--text-3)" }}>{rest.length}</span>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
                   {rest.map(item => <OpportunityCard key={item.id} item={item} loggedIn={!!session} />)}
