@@ -62,7 +62,6 @@ export default function SectorPage({ params }: { params: Promise<{ name: string 
         <div className="flex items-start justify-between mb-8">
           <div>
             <div className="flex items-center gap-3 mb-1">
-              <TrendingDown size={18} style={{ color: "#f43f5e" }} />
               <h1 className="text-2xl font-semibold tracking-tight" style={{ color: "var(--text)" }}>
                 {sectorLabel}
               </h1>
@@ -82,7 +81,6 @@ export default function SectorPage({ params }: { params: Promise<{ name: string 
           </div>
         ) : items.length === 0 ? (
           <div className="text-center py-32 rounded-xl" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
-            <TrendingDown size={32} style={{ color: "#222", margin: "0 auto 12px" }} />
             <p className="text-sm" style={{ color: "var(--text-3)" }}>No bear theses for {sectorLabel} yet</p>
             <p className="text-xs mt-1" style={{ color: "#333" }}>Check back after the next scheduler run</p>
           </div>
