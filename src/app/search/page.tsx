@@ -72,30 +72,30 @@ function SearchPageInner() {
       <main className="max-w-3xl mx-auto px-6 py-8">
         {/* Modern Search box */}
         <div 
-          className="relative mb-8 shadow-sm transition-all rounded-2xl"
+          className="flex items-center mb-8 shadow-sm transition-all rounded-2xl px-5"
           style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
+          onFocus={e => {
+            e.currentTarget.style.borderColor = "var(--border-hover)";
+            e.currentTarget.style.boxShadow = "0 8px 32px rgba(0,0,0,0.12), 0 0 0 1px rgba(255,255,255,0.05)";
+          }}
+          onBlur={e => {
+            e.currentTarget.style.borderColor = "var(--border)";
+            e.currentTarget.style.boxShadow = "none";
+          }}
         >
-          <Search size={20} className="absolute left-5 top-1/2 -translate-y-1/2" style={{ color: "var(--text-3)" }} />
+          <Search size={20} style={{ color: "var(--text-3)", flexShrink: 0 }} />
           <input
             autoFocus
             value={query}
             onChange={e => setQuery(e.target.value)}
             placeholder="Search opportunities, tickers, events…"
-            className="w-full bg-transparent text-lg pl-14 pr-6 py-5 rounded-2xl focus:outline-none transition-all placeholder:opacity-50"
-            style={{ color: "var(--text)" }}
-            onFocus={e => {
-              const parent = e.currentTarget.parentElement;
-              if (parent) {
-                parent.style.borderColor = "var(--border-hover)";
-                parent.style.boxShadow = "0 8px 32px rgba(0,0,0,0.12), 0 0 0 1px rgba(255,255,255,0.05)";
-              }
-            }}
-            onBlur={e => {
-              const parent = e.currentTarget.parentElement;
-              if (parent) {
-                parent.style.borderColor = "var(--border)";
-                parent.style.boxShadow = "none";
-              }
+            className="w-full text-lg py-5 px-4 focus:outline-none transition-all placeholder:opacity-50"
+            style={{ 
+              background: "transparent", 
+              border: "none", 
+              outline: "none", 
+              color: "var(--text)", 
+              boxShadow: "none" 
             }}
           />
         </div>
