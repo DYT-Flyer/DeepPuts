@@ -272,12 +272,7 @@ export default function OpportunityPage({ params }: { params: Promise<{ id: stri
                 />
               </div>
 
-              {/* AI metadata footer */}
-              {(data.modelName || data.promptVersion) && (
-                <p className="text-xs mt-4 pt-3" style={{ borderTop: "1px solid var(--border)", color: "#2a2a2a" }}>
-                  {[data.modelName, data.promptVersion && `prompt ${data.promptVersion}`].filter(Boolean).join(" · ")}
-                </p>
-              )}
+
             </div>
 
             {/* Counterarguments */}
