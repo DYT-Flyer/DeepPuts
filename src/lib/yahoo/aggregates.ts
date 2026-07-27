@@ -110,32 +110,39 @@ export async function fetchSparkline(symbol: string): Promise<SparklinePoint[]> 
   from.setDate(from.getDate() - 7); // Default to last 7 days for a sparkline
 
   try {
-    // Yahoo Finance intra-day data is limited in the historical API to '1d', '1wk', '1mo'
-    // To get hourly data, we must use chart/historical with specific intervals, but 
-    // yahoo-finance2 `historical` actually supports '1h' if period is short enough.
-    // However, using '1d' over a larger period works well for sparklines too.
+    const period1 = Math.floor(from.getTime() / 1000);
+    const period2 = Math.floor(now.getTime() / 1000);
     
     // Attempt intra-day if supported
-    let results: any[] = [];
-    try {
-      results = (await yahooFinance.historical(yahooSymbol, {
-        period1: toDateStr(from),
-        period2: toDateStr(now),
-        interval: "1h",
-      })) as any[];
-    } catch {
-      // Fallback to daily if hourly fails
-      results = (await yahooFinance.historical(yahooSymbol, {
-        period1: toDateStr(from),
-        period2: toDateStr(now),
-        interval: "1d",
-      })) as any[];
+    let interval = "1h";
+    let res = await fetch(`https://query2.finance.yahoo.com/v8/finance/chart/${yahooSymbol}?period1=${period1}&period2=${period2}&interval=${interval}`);
+    
+    if (!res.ok) {
+      interval = "1d";
+      res = await fetch(`https://query2.finance.yahoo.com/v8/finance/chart/${yahooSymbol}?period1=${period1}&period2=${period2}&interval=${interval}`);
     }
-
-    return results.map((r) => ({
-      t: new Date(r.date).getTime(),
-      c: r.close,
-    }));
+    
+    if (!res.ok) return [];
+    
+    const data = await res.json();
+    const result = data?.chart?.result?.[0];
+    if (!result) return [];
+    
+    const timestamps = result.timestamp as number[];
+    const closes = result.indicators?.quote?.[0]?.close as (number | null)[];
+    
+    if (!timestamps || !closes || timestamps.length !== closes.length) return [];
+    
+    const validPoints: SparklinePoint[] = [];
+    for (let i = 0; i < timestamps.length; i++) {
+      if (closes[i] !== null) {
+        validPoints.push({
+          t: timestamps[i] * 1000,
+          c: closes[i] as number,
+        });
+      }
+    }
+    return validPoints;
   } catch (err) {
     console.error(`Failed to fetch sparkline for ${symbol}:`, err);
     return [];

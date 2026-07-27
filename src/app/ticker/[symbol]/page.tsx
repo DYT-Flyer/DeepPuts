@@ -103,8 +103,15 @@ export default function TickerPage({ params }: { params: Promise<{ symbol: strin
         <div className="rounded-xl p-6 mb-6" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
           <div className="flex items-start justify-between mb-5">
             <div className="flex flex-col gap-3">
-              <div className="flex items-center gap-3">
-                <h1 className="text-3xl font-bold tracking-tight" style={{ color: "var(--text)" }}>{upper}</h1>
+              <div className="flex items-center gap-4">
+                <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3" style={{ color: "var(--text)" }}>
+                  {upper}
+                  {sparkline.length > 0 && (
+                    <span className="font-mono text-2xl font-semibold" style={{ color: "var(--text-2)" }}>
+                      ${sparkline[sparkline.length - 1].c.toFixed(2)}
+                    </span>
+                  )}
+                </h1>
                 {session && (
                   <button
                     onClick={toggleWatch}
