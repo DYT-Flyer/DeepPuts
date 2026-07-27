@@ -44,9 +44,13 @@ function SearchPageInner() {
 
   useEffect(() => {
     const q = query.trim();
-    if (q.length < 2) { setResults(null); return; }
-
+    
     if (debounceRef.current) clearTimeout(debounceRef.current);
+    
+    if (q.length < 2) { 
+      setResults(null); 
+      return; 
+    }
     debounceRef.current = setTimeout(async () => {
       setLoading(true);
       router.replace(`/search?q=${encodeURIComponent(q)}`, { scroll: false });
@@ -132,12 +136,6 @@ function SearchPageInner() {
           </div>
         )}
 
-        {/* Prompt */}
-        {!loading && query.trim().length < 2 && (
-          <div className="text-center py-20">
-            <p className="text-sm" style={{ color: "var(--text-3)" }}>Type at least 2 characters to search</p>
-          </div>
-        )}
 
         {/* Results */}
         {!loading && results && (
