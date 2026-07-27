@@ -7,6 +7,7 @@ import { Nav } from "@/components/nav";
 import { ConvictionBadge } from "@/components/conviction-badge";
 import { SignalBadge } from "@/components/signal-badge";
 import { VoteButtons } from "@/components/social/vote-buttons";
+import { CardPerformance } from "@/components/card-performance";
 import { RefreshCw, ArrowUpRight } from "lucide-react";
 import type { SignalType } from "@/types";
 import { formatCatalyst, getDomain } from "@/lib/utils";
@@ -198,6 +199,9 @@ function DashboardRow({ item, loggedIn }: { item: DashboardTopItem; loggedIn: bo
               >{t}</Link>
             </span>
           ))}
+          {item.affectedTickers.length > 0 && (
+            <CardPerformance opportunityId={item.id} />
+          )}
           <span style={{ flex: 1 }} />
           <div style={{ display: "flex", alignItems: "center", gap: "6px" }} onClick={(e) => e.stopPropagation()}>
             <VoteButtons
