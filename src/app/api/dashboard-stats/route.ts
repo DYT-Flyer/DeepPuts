@@ -33,8 +33,8 @@ export async function GET() {
     }),
   ]);
 
-  // Trending tickers: count appearances across last 30 days
-  const sinceDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+  // Trending tickers: count appearances across last 24 hours (1 day)
+  const sinceDate = new Date(Date.now() - 24 * 60 * 60 * 1000);
   const recentAnalyses = await prisma.analysis.findMany({
     where: { createdAt: { gte: sinceDate } },
     select: { affectedTickers: true },
@@ -42,7 +42,10 @@ export async function GET() {
   const tickerCounts = new Map<string, number>();
   for (const a of recentAnalyses) {
     for (const t of JSON.parse(a.affectedTickers) as string[]) {
-      tickerCounts.set(t, (tickerCounts.get(t) ?? 0) + 1);
+      // Only include actual tickers (all caps, numbers, hyphens, dots), exclude sectors (which have lowercase)
+      if (/^[A-Z0-9.\-]+$/.test(t)) {
+        tickerCounts.set(t, (tickerCounts.get(t) ?? 0) + 1);
+      }
     }
   }
   const trendingTickers = [...tickerCounts.entries()]

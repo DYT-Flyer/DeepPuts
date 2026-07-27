@@ -75,7 +75,8 @@ export default function DashboardPage() {
                 const quote = quotes[ticker];
                 let trendClass = "";
                 if (quote) {
-                  trendClass = quote.change >= 0 ? " up" : " down";
+                  if (quote.change > 0) trendClass = " up";
+                  else if (quote.change < 0) trendClass = " down";
                 }
                 return (
                   <Link key={ticker} href={`/ticker/${ticker}`} className={`trending-tag${trendClass}`}>
