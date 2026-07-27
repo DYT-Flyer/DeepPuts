@@ -77,5 +77,33 @@ export async function GET(req: NextRequest) {
     articleUrl: (JSON.parse(e.rawJson) as { article_url?: string }).article_url ?? null,
   }));
 
-  return NextResponse.json({ opportunities, events: rawEvents });
+  const tickerFrequencies = new Map<string, number>();
+  const upperQ = q.toUpperCase();
+  if (/^[A-Z0-9.\-]+$/.test(upperQ)) {
+    tickerFrequencies.set(upperQ, 100); // Give exact ticker matches a huge boost
+  }
+
+  for (const a of analyses) {
+    for (const t of JSON.parse(a.affectedTickers) as string[]) {
+      tickerFrequencies.set(t, (tickerFrequencies.get(t) ?? 0) + 1);
+    }
+  }
+  for (const e of events) {
+    for (const t of JSON.parse(e.tickers) as string[]) {
+      tickerFrequencies.set(t, (tickerFrequencies.get(t) ?? 0) + 1);
+    }
+  }
+
+  const suggestedTickers = [...tickerFrequencies.entries()]
+    .sort((a, b) => {
+      const aMatches = a[0].includes(upperQ);
+      const bMatches = b[0].includes(upperQ);
+      if (aMatches && !bMatches) return -1;
+      if (!aMatches && bMatches) return 1;
+      return b[1] - a[1];
+    })
+    .slice(0, 5)
+    .map(e => e[0]);
+
+  return NextResponse.json({ opportunities, events: rawEvents, tickers: suggestedTickers });
 }

@@ -21,6 +21,7 @@ interface RawEventResult {
 interface SearchResults {
   opportunities: OpportunityItem[];
   events: RawEventResult[];
+  tickers: string[];
 }
 
 export default function SearchPage() {
@@ -57,28 +58,45 @@ function SearchPageInner() {
 
   const totalOpps = results?.opportunities.length ?? 0;
   const totalEvents = results?.events.length ?? 0;
-  const total = totalOpps + totalEvents;
+  const totalTickers = results?.tickers.length ?? 0;
+  const total = totalOpps + totalEvents + totalTickers;
 
   const showOpps = tab === "all" || tab === "opportunities";
   const showEvents = tab === "all" || tab === "events";
+  const showTickers = tab === "all"; // Tickers only show on the 'all' tab
 
   return (
     <div className="min-h-screen" style={{ background: "var(--bg)" }}>
       <Nav userEmail={session?.user?.email} userName={session?.user?.name} />
 
       <main className="max-w-3xl mx-auto px-6 py-8">
-        {/* Search box */}
-        <div className="relative mb-6">
-          <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: "var(--text-3)" }} />
+        {/* Modern Search box */}
+        <div 
+          className="relative mb-8 shadow-sm transition-all rounded-2xl"
+          style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
+        >
+          <Search size={20} className="absolute left-5 top-1/2 -translate-y-1/2" style={{ color: "var(--text-3)" }} />
           <input
             autoFocus
             value={query}
             onChange={e => setQuery(e.target.value)}
             placeholder="Search opportunities, tickers, events…"
-            className="w-full text-sm pl-10 pr-4 py-3 rounded-xl"
-            style={{ background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text)" }}
-            onFocus={e => (e.target.style.borderColor = "var(--border-hover)")}
-            onBlur={e => (e.target.style.borderColor = "var(--border)")}
+            className="w-full bg-transparent text-lg pl-14 pr-6 py-5 rounded-2xl focus:outline-none transition-all placeholder:opacity-50"
+            style={{ color: "var(--text)" }}
+            onFocus={e => {
+              const parent = e.currentTarget.parentElement;
+              if (parent) {
+                parent.style.borderColor = "var(--border-hover)";
+                parent.style.boxShadow = "0 8px 32px rgba(0,0,0,0.12), 0 0 0 1px rgba(255,255,255,0.05)";
+              }
+            }}
+            onBlur={e => {
+              const parent = e.currentTarget.parentElement;
+              if (parent) {
+                parent.style.borderColor = "var(--border)";
+                parent.style.boxShadow = "none";
+              }
+            }}
           />
         </div>
 
@@ -124,6 +142,30 @@ function SearchPageInner() {
         {/* Results */}
         {!loading && results && (
           <div className="space-y-6">
+            
+            {/* Tickers Section */}
+            {showTickers && totalTickers > 0 && (
+              <section>
+                <h2 className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: "var(--text-3)" }}>
+                  Tickers
+                </h2>
+                <div className="flex flex-wrap gap-2">
+                  {results.tickers.map(ticker => (
+                    <Link
+                      key={ticker}
+                      href={`/ticker/${ticker}`}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-mono font-medium transition-all"
+                      style={{ background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text)" }}
+                      onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--border-hover)"; e.currentTarget.style.background = "rgba(255,255,255,0.05)"; }}
+                      onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.background = "var(--surface)"; }}
+                    >
+                      {ticker}
+                    </Link>
+                  ))}
+                </div>
+              </section>
+            )}
+
             {showOpps && totalOpps > 0 && (
               <section>
                 {tab === "all" && (
