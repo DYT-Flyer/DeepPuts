@@ -71,26 +71,7 @@ export default function SectorPage({ params }: { params: Promise<{ name: string 
               Bearish theses for the {sectorLabel} sector
             </p>
           </div>
-          {!loading && items.length > 0 && (
-            <div className="flex items-center gap-2 flex-wrap justify-end">
-              <span className="text-xs px-2.5 py-1.5 rounded-lg"
-                style={{ background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text-3)" }}>
-                {items.length} {items.length === 1 ? "thesis" : "theses"}
-              </span>
-              {highConviction.length > 0 && (
-                <span className="text-xs px-2.5 py-1.5 rounded-lg"
-                  style={{ background: "rgba(244,63,94,0.08)", border: "1px solid rgba(244,63,94,0.2)", color: "#f43f5e" }}>
-                  {highConviction.length} high conviction
-                </span>
-              )}
-              {avgScore && (
-                <span className="text-xs px-2.5 py-1.5 rounded-lg"
-                  style={{ background: "var(--surface)", border: "1px solid var(--border)", color: "var(--text-3)" }}>
-                  avg {avgScore}/10
-                </span>
-              )}
-            </div>
-          )}
+
         </div>
 
         {loading ? (
