@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { computeThesisStatus, type ThesisStatus } from "@/lib/performance/calculator";
-import { toPolygonSymbol } from "@/lib/polygon/aggregates";
+import { toYahooSymbol } from "@/lib/yahoo/aggregates";
+import yahooFinance from 'yahoo-finance2';
 
 export interface TickerPerformance {
   ticker: string;
@@ -17,21 +18,24 @@ export interface TickerPerformance {
   status: ThesisStatus;
 }
 
-const POLYGON_BASE = "https://api.polygon.io";
-
 function toDateStr(d: Date) {
   return d.toISOString().split("T")[0];
 }
 
-async function fetchClose(polygonSymbol: string, from: Date, to: Date, sort = "asc"): Promise<number | null> {
-  const key = process.env.POLYGON_API_KEY;
-  if (!key) return null;
+async function fetchClose(yahooSymbol: string, from: Date, to: Date, sort = "asc"): Promise<number | null> {
   try {
-    const url = `${POLYGON_BASE}/v2/aggs/ticker/${encodeURIComponent(polygonSymbol)}/range/1/day/${toDateStr(from)}/${toDateStr(to)}?adjusted=true&sort=${sort}&limit=5&apiKey=${key}`;
-    const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
-    if (!res.ok) return null;
-    const data = await res.json() as { results?: Array<{ c: number }> };
-    return data.results?.[0]?.c ?? null;
+    const results: any = await yahooFinance.historical(yahooSymbol, {
+      period1: toDateStr(from),
+      period2: toDateStr(to),
+      interval: "1d"
+    });
+    
+    if (!results || results.length === 0) return null;
+    
+    if (sort === "desc") {
+      return results[results.length - 1].close ?? null;
+    }
+    return results[0].close ?? null;
   } catch {
     return null;
   }
@@ -74,7 +78,7 @@ export async function GET(
   const missingPub = tickers.filter(t => snapshot[t] === undefined);
   if (missingPub.length > 0) {
     const prices = await Promise.all(
-      missingPub.map(t => fetchClose(toPolygonSymbol(t), pubDate, addDays(pubDate, 7), "asc"))
+      missingPub.map(t => fetchClose(toYahooSymbol(t), pubDate, addDays(pubDate, 7), "asc"))
     );
     let updated = false;
     missingPub.forEach((t, i) => {
@@ -90,7 +94,7 @@ export async function GET(
   // Fetch all horizon prices in parallel per ticker
   const results: TickerPerformance[] = await Promise.all(
     tickers.map(async (ticker) => {
-      const sym = toPolygonSymbol(ticker);
+      const sym = toYahooSymbol(ticker);
       const pubPrice = snapshot[ticker] ?? null;
 
       // Fetch horizons in parallel — only meaningful if pub date is old enough

@@ -1,7 +1,7 @@
 import prisma from "@/lib/prisma";
 import pLimit from "p-limit";
-import { fetchStockNews, fetchCryptoNews } from "@/lib/polygon/news";
-import { detectAnomalies } from "@/lib/polygon/aggregates";
+import { fetchStockNews, fetchCryptoNews } from "@/lib/yahoo/news";
+import { detectAnomalies } from "@/lib/yahoo/aggregates";
 import { fetchRecent8KFilings } from "@/lib/sec/edgar";
 import { fetchCnbcNews } from "@/lib/cnbc/rss";
 import { fetchWsjNews } from "@/lib/wsj/rss";

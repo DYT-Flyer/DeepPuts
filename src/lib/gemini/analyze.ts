@@ -1,6 +1,6 @@
 import { getGeminiClient } from "./client";
 import type { AnalysisResult } from "@/types";
-import type { PriceAnomaly } from "@/lib/polygon/aggregates";
+import type { PriceAnomaly } from "@/lib/yahoo/aggregates";
 import { Type } from "@google/genai";
 
 export const PROMPT_VERSION = "v3.0-gemini";

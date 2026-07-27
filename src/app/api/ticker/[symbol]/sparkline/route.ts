@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { fetchSparkline } from "@/lib/polygon/aggregates";
+import { fetchSparkline } from "@/lib/yahoo/aggregates";
 
 export async function GET(
   _req: Request,
@@ -10,7 +10,7 @@ export async function GET(
   const symbol = resolvedParams.symbol;
 
   try {
-    const data = await fetchSparkline(symbol.toUpperCase(), 30);
+    const data = await fetchSparkline(symbol.toUpperCase());
     return NextResponse.json(data);
   } catch (err) {
     return NextResponse.json({ error: (err as Error).message }, { status: 500 });

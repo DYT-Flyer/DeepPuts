@@ -2,7 +2,6 @@ import { z } from "zod";
 
 const envSchema = z.object({
   DATABASE_URL: z.string().min(1, "DATABASE_URL is missing"),
-  POLYGON_API_KEY: z.string().min(1, "POLYGON_API_KEY is missing").optional(),
   GEMINI_API_KEY: z.string().min(1, "GEMINI_API_KEY is missing").optional(),
   // Add other required/optional keys here
 });
