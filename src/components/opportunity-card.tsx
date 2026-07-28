@@ -120,8 +120,6 @@ export function OpportunityCard({ item, loggedIn }: Props) {
           </div>
         </div>
       </div>
-        </div>
-      </div>
       {!loggedIn && (
         <div className="absolute inset-0 z-10 backdrop-blur-[8px]" style={{ background: "rgba(10, 10, 10, 0.4)" }} />
       )}
