@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { Lock } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { ConvictionBadge } from "./conviction-badge";
 import { SignalBadge } from "./signal-badge";
@@ -10,16 +11,20 @@ import { getDomain, formatAge } from "@/lib/utils";
 import type { EventFeedItem } from "@/types";
 import { useSession } from "next-auth/react";
 
+const FREE_CARD_LIMIT = 3;
+
 interface Props {
   item: EventFeedItem;
   loggedIn?: boolean;
+  index?: number;
 }
 
-export function EventFeedRow({ item, loggedIn }: Props) {
+export function EventFeedRow({ item, loggedIn, index }: Props) {
   const router = useRouter();
   const { data: session } = useSession();
   const isAnalyzed = !!item.analysis;
   const isPro = (session?.user as any)?.tier === "PRO";
+  const isLocked = !isPro && (index ?? 0) >= FREE_CARD_LIMIT;
   const displayTickers = item.analysis ? item.analysis.affectedTickers : item.tickers;
   
   return (
@@ -82,7 +87,7 @@ export function EventFeedRow({ item, loggedIn }: Props) {
 
       {item.analysis && (
         <div className="relative mt-2">
-          <p className={`text-xs leading-relaxed line-clamp-2 ${!isPro ? "blur-[4px] select-none opacity-50" : ""}`} style={{ color: "var(--text-2)" }}>
+          <p className="text-xs leading-relaxed line-clamp-2" style={{ color: "var(--text-2)" }}>
             {item.analysis.bearThesis}
           </p>
         </div>
@@ -136,8 +141,25 @@ export function EventFeedRow({ item, loggedIn }: Props) {
         )}
       </div>
       </div>
-      {!loggedIn && (
-        <div className="absolute inset-0 z-10 rounded-xl backdrop-blur-[8px]" style={{ background: "rgba(10, 10, 10, 0.4)" }} />
+      {isLocked && (
+        <div
+          className="absolute inset-0 z-10 rounded-xl backdrop-blur-[8px] flex flex-col items-center justify-center gap-2"
+          style={{ background: "rgba(10, 10, 10, 0.55)" }}
+          onClick={e => e.stopPropagation()}
+        >
+          <Lock size={14} style={{ color: "var(--text-3)" }} />
+          <p className="text-xs" style={{ color: "var(--text-2)" }}>
+            {loggedIn ? "PRO members only" : "Sign in for full access"}
+          </p>
+          <Link
+            href={loggedIn ? "/pricing" : "/login"}
+            className="text-xs px-3 py-1.5 rounded-lg font-medium transition-opacity hover:opacity-80"
+            style={{ background: "#f43f5e", color: "#fff" }}
+            onClick={e => e.stopPropagation()}
+          >
+            {loggedIn ? "Upgrade to PRO" : "Sign In"}
+          </Link>
+        </div>
       )}
     </div>
   );

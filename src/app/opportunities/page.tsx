@@ -345,7 +345,7 @@ function OpportunityBoardInner() {
                   <div className="flex-1 h-px" style={{ background: "rgba(244,63,94,0.15)" }} />
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-                  {highConviction.map(item => <OpportunityCard key={item.id} item={item} loggedIn={!!session} />)}
+                  {highConviction.map((item, i) => <OpportunityCard key={item.id} item={item} loggedIn={!!session} index={i} />)}
                 </div>
               </section>
             )}
@@ -358,7 +358,7 @@ function OpportunityBoardInner() {
                   <div className="flex-1 h-px" style={{ background: "var(--border)" }} />
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-                  {rest.map(item => <OpportunityCard key={item.id} item={item} loggedIn={!!session} />)}
+                  {rest.map((item, i) => <OpportunityCard key={item.id} item={item} loggedIn={!!session} index={highConviction.length + i} />)}
                 </div>
               </section>
             )}

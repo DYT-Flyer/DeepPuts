@@ -55,8 +55,8 @@ export default function PopularPage() {
           </div>
         ) : (
           <div className="space-y-4">
-            {items.map((item) => (
-              <OpportunityCard key={item.id} item={item} loggedIn={!!session?.user} />
+            {items.map((item, i) => (
+              <OpportunityCard key={item.id} item={item} loggedIn={!!session?.user} index={i} />
             ))}
           </div>
         )}

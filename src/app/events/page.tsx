@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useSession } from "next-auth/react";
 import { Nav } from "@/components/nav";
 import { EventFeedRow } from "@/components/event-feed-item";
@@ -62,6 +62,11 @@ export default function EventsPage() {
     if (page > 0) fetchEvents(false); 
   }, [page]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const indexMap = useMemo(
+    () => new Map(items.map((item, i) => [item.id, i])),
+    [items]
+  );
+
   if (!mounted) return null;
 
   return (
@@ -115,7 +120,7 @@ export default function EventsPage() {
                       {events.length}
                     </span>
                   </div>
-                  {events.map(item => <EventFeedRow key={item.id} item={item} loggedIn={!!session} />)}
+                  {events.map(item => <EventFeedRow key={item.id} item={item} loggedIn={!!session} index={indexMap.get(item.id) ?? 0} />)}
                 </div>
               ))}
               {hasMore && (
