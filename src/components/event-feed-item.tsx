@@ -135,6 +135,7 @@ export function EventFeedRow({ item, loggedIn }: Props) {
           </>
         )}
       </div>
+      </div>
       {!loggedIn && (
         <div className="absolute inset-0 flex items-center justify-center z-10 bg-black/10">
           <Link href="/login" onClick={e => e.stopPropagation()} className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest px-4 py-2 rounded-full transition-colors hover:bg-white/10" style={{ background: "var(--surface-2)", color: "var(--text-1)", border: "1px solid var(--border)" }}>
