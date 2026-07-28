@@ -6,6 +6,7 @@ import {
   ResponsiveContainer,
   Tooltip,
   ReferenceLine,
+  XAxis,
 } from "recharts";
 import type { SparklinePoint } from "@/types";
 
@@ -31,14 +32,18 @@ export function Sparkline({ data, height = 80 }: Props) {
   const isDown = lastPrice < firstPrice;
   const color = isDown ? "#ef4444" : "#22c55e";
 
-  const formatted = data.map((d) => ({
-    ...d,
-    date: new Date(d.t).toLocaleDateString(),
-  }));
+  const formatted = data.map((d) => {
+    const dateObj = new Date(d.t);
+    return {
+      ...d,
+      date: dateObj.toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }),
+    };
+  });
 
   return (
     <ResponsiveContainer width="100%" height={height}>
       <LineChart data={formatted}>
+        <XAxis dataKey="date" hide />
         <Line
           type="monotone"
           dataKey="c"
