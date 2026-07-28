@@ -114,9 +114,6 @@ export default function EventsPage() {
                     <span className="text-xs font-mono px-1.5 py-0.5 rounded" style={{ background: "var(--surface-2)", color: "#555", border: "1px solid var(--border)" }}>
                       {events.length}
                     </span>
-                    <span className="text-xs" style={{ color: "#555" }}>
-                      {events.filter(e => e.analysis).length} analyzed
-                    </span>
                   </div>
                   {events.map(item => <EventFeedRow key={item.id} item={item} loggedIn={!!session} />)}
                 </div>

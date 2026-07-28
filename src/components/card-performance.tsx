@@ -3,14 +3,32 @@
 import { useEffect, useState } from "react";
 import type { TickerPerformance } from "@/app/api/opportunity/[id]/performance/route";
 
-export function CardPerformance({ opportunityId }: { opportunityId: string }) {
+export function CardPerformance({ 
+  opportunityId,
+  tickers,
+  pubDate,
+  assetClass
+}: { 
+  opportunityId?: string,
+  tickers?: string[],
+  pubDate?: string,
+  assetClass?: string
+}) {
   const [perf, setPerf] = useState<TickerPerformance | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchPerf() {
+      if (!opportunityId && (!tickers || tickers.length === 0 || !pubDate)) {
+        setLoading(false);
+        return;
+      }
       try {
-        const res = await fetch(`/api/opportunity/${opportunityId}/performance`);
+        const url = opportunityId 
+          ? `/api/opportunity/${opportunityId}/performance`
+          : `/api/performance?tickers=${tickers!.join(",")}&pubDate=${encodeURIComponent(pubDate!)}${assetClass ? `&assetClass=${assetClass}` : ""}`;
+        
+        const res = await fetch(url);
         if (res.ok) {
           const data: TickerPerformance[] = await res.json();
           if (data && data.length > 0) {
@@ -24,7 +42,7 @@ export function CardPerformance({ opportunityId }: { opportunityId: string }) {
       }
     }
     fetchPerf();
-  }, [opportunityId]);
+  }, [opportunityId, tickers?.join(","), pubDate, assetClass]);
 
   if (loading) {
     return (

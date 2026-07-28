@@ -93,8 +93,13 @@ export function EventFeedRow({ item, loggedIn }: Props) {
             </Link>
           </span>
         ))}
-        {item.analysis && item.tickers.length > 0 && (
-          <CardPerformance opportunityId={item.analysis.id} />
+        {item.tickers.length > 0 && (
+          <CardPerformance 
+            opportunityId={item.analysis?.id} 
+            tickers={item.tickers}
+            pubDate={item.publishedAt}
+            assetClass={item.assetClass}
+          />
         )}
         {item.analysis && (
           <>
