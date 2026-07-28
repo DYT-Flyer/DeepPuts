@@ -7,7 +7,7 @@ export async function GET(req: Request) {
   const tickersStr = searchParams.get("tickers");
   if (!tickersStr) return NextResponse.json({});
 
-  const tickers = tickersStr.split(",").map(toYahooSymbol);
+  const tickers = tickersStr.split(",").map(t => toYahooSymbol(t));
 
   const map: Record<string, { change: number, changePerc: number }> = {};
   
