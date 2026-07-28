@@ -24,126 +24,89 @@ export function OpportunityCard({ item, loggedIn }: Props) {
   return (
     <div
       onClick={() => router.push(`/opportunity/${item.id}#comments`)}
-      className="group rounded-xl p-4 flex flex-col gap-3 transition-all duration-200 cursor-pointer"
-      style={{
-        background: "var(--surface)",
-        border: "1px solid var(--border)",
-        cursor: "pointer"
-      }}
+      className="rounded-xl px-4 py-4 transition-all cursor-pointer"
+      style={{ background: "var(--surface)", border: "1px solid var(--border)", cursor: "pointer" }}
       onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--border-hover)"; e.currentTarget.style.background = "var(--surface-hover)"; }}
       onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.background = "var(--surface)"; }}
     >
-      {/* Age + Catalyst */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        {catalyst ? (
-          <span className="text-xs px-2 py-0.5 rounded-full font-medium"
-            style={{
-              background: catalyst.urgent ? "rgba(245,158,11,0.12)" : "rgba(255,255,255,0.05)",
-              color: catalyst.urgent ? "#f59e0b" : "#666",
-              border: `1px solid ${catalyst.urgent ? "rgba(245,158,11,0.25)" : "rgba(255,255,255,0.08)"}`,
-            }}
-          >{catalyst.label}</span>
-        ) : <span />}
-        <span className="text-xs" style={{ color: "var(--text-3)" }}>{age}</span>
-      </div>
-
-      {/* Score + Headline */}
-      <div style={{ display: "flex", alignItems: "flex-start", gap: "10px" }}>
-        <ConvictionBadge score={item.convictionScore} />
-        <div style={{ flex: 1, minWidth: 0 }}>
-          {item.event.articleUrl ? (
-            <div className="line-clamp-2 leading-snug">
-              <a
-                href={item.event.articleUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={(e) => e.stopPropagation()}
-                className="text-sm font-medium transition-colors hover:underline inline-flex items-center gap-1.5"
-                style={{ color: "var(--text)" }}
-                onMouseEnter={e => (e.currentTarget.style.color = "var(--red)")}
-                onMouseLeave={e => (e.currentTarget.style.color = "var(--text)")}
-              >
-                {item.event.headline}
-                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, opacity: 0.5 }}><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
-              </a>
-              {domain && (
+      <div className="flex-1 min-w-0">
+        <div style={{ display: "flex", alignItems: "flex-start", gap: "10px", marginBottom: "4px" }}>
+          <ConvictionBadge score={item.convictionScore} size="sm" />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div className="w-full truncate leading-snug">
+              {item.event.articleUrl ? (
                 <>
-                  {" "}
-                  <span className="text-xs font-normal whitespace-nowrap" style={{ color: "var(--text-3)" }}>
-                    {domain}
-                  </span>
+                  <a href={item.event.articleUrl} target="_blank" rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    className="text-sm font-medium transition-colors hover:underline"
+                    style={{ color: "#fff" }}
+                  >
+                    {item.event.headline}
+                  </a>
+                  {getDomain(item.event.articleUrl) && (
+                    <>
+                      {" "}
+                      <span className="text-xs font-normal whitespace-nowrap" style={{ color: "var(--text-3)" }}>
+                        {getDomain(item.event.articleUrl)}
+                      </span>
+                    </>
+                  )}
                 </>
+              ) : (
+                <span className="text-sm font-medium" style={{ color: "#fff" }}>
+                  {item.event.headline}
+                </span>
               )}
             </div>
-          ) : (
-            <p className="text-sm font-medium leading-snug line-clamp-2" style={{ color: "#d4d4d4" }}>
-              {item.event.headline}
-            </p>
-          )}
+          </div>
+          <span className="shrink-0 text-xs whitespace-nowrap text-right pt-0.5" style={{ color: "var(--text-3)" }}>
+            {formatAge(item.event.publishedAt)}
+          </span>
         </div>
-      </div>
-
-      {/* Bear thesis */}
-      <p className="text-xs leading-relaxed line-clamp-3" style={{ color: "var(--text-2)" }}>
-        {item.bearThesis}
-      </p>
-
-      {/* Footer */}
-      <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap", paddingTop: "8px", borderTop: "1px solid var(--border)" }}>
-        <SignalBadge type={item.signalType} />
-        {item.sector && (
-          <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: "rgba(255,255,255,0.06)", color: "#aaa", border: "1px solid rgba(255,255,255,0.1)" }}>
-            {item.sector}
-          </span>
-        )}
-        {item.affectedTickers.length > 0 && (
-          <span style={{ color: "#444", lineHeight: 1, fontSize: "14px" }}>·</span>
-        )}
-        {item.affectedTickers.slice(0, 6).map((ticker, i) => (
-          <span key={ticker} style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
-            {i > 0 && <span style={{ color: "#444", lineHeight: 1, fontSize: "14px" }}>·</span>}
-            <Link
-              href={`/ticker/${ticker}`}
-              className="text-xs font-mono px-2 py-0.5 rounded transition-colors"
-              style={{ background: "rgba(255,255,255,0.04)", color: "#bbb", border: "1px solid var(--border)" }}
-              onMouseEnter={e => { e.currentTarget.style.color = "#ddd"; e.currentTarget.style.background = "rgba(255,255,255,0.08)"; }}
-              onMouseLeave={e => { e.currentTarget.style.color = "#bbb"; e.currentTarget.style.background = "rgba(255,255,255,0.04)"; }}
+        <p className="text-xs leading-relaxed line-clamp-2" style={{ color: "var(--text-2)" }}>
+          {item.bearThesis}
+        </p>
+        <div className="flex items-center gap-2 mt-3 flex-wrap">
+          <SignalBadge type={item.signalType} size="sm" />
+          {catalyst && (
+            <span className="text-xs px-2 py-0.5 rounded-full font-medium"
+              style={{
+                background: catalyst.urgent ? "rgba(245,158,11,0.12)" : "rgba(255,255,255,0.05)",
+                color: catalyst.urgent ? "#f59e0b" : "#666",
+                border: `1px solid ${catalyst.urgent ? "rgba(245,158,11,0.25)" : "rgba(255,255,255,0.08)"}`,
+              }}
+            >{catalyst.label}</span>
+          )}
+          {item.affectedTickers.slice(0, 4).map((t) => (
+            <span key={t} className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+              <span style={{ color: "#2a2a2a" }}>·</span>
+              <Link href={`/ticker/${t}`} className="text-xs font-mono transition-colors"
+                style={{ color: "#aaa" }}
+                onMouseEnter={e => (e.currentTarget.style.color = "#fff")}
+                onMouseLeave={e => (e.currentTarget.style.color = "#aaa")}
+              >{t}</Link>
+            </span>
+          ))}
+          {item.affectedTickers.length > 0 && (
+            <CardPerformance opportunityId={item.id} />
+          )}
+          <span style={{ flex: 1 }} />
+          <div style={{ display: "flex", alignItems: "center", gap: "6px" }} onClick={(e) => e.stopPropagation()}>
+            <VoteButtons
+              analysisId={item.id}
+              initialScore={item.voteScore}
+              initialUserVote={item.userVote}
+              loggedIn={!!loggedIn}
+            />
+            <span style={{ color: "#555", lineHeight: 1, fontSize: "13px" }}>·</span>
+            <Link href={`/opportunity/${item.id}`} className="text-xs transition-colors"
+              style={{ color: "#aaa" }}
+              onMouseEnter={e => (e.currentTarget.style.color = "#fff")}
+              onMouseLeave={e => (e.currentTarget.style.color = "#aaa")}
             >
-              {ticker}
+              {item.commentCount > 0 ? `${item.commentCount} Comment${item.commentCount !== 1 ? "s" : ""}` : "Comments"}
             </Link>
-          </span>
-        ))}
-        {item.affectedTickers.length > 0 && (
-          <CardPerformance opportunityId={item.id} />
-        )}
-        {item.affectedTickers.length > 6 && (
-          <span className="text-xs" style={{ color: "var(--text-3)" }}>+{item.affectedTickers.length - 6}</span>
-        )}
-
-        {/* AI badge */}
-        <span className="text-xs px-1.5 py-0.5 rounded"
-          style={{ background: "rgba(255,255,255,0.03)", color: "#333", border: "1px solid rgba(255,255,255,0.05)", marginLeft: "auto" }}>
-          AI
-        </span>
-
-        {/* Vote + comments */}
-        <div style={{ display: "flex", alignItems: "center", gap: "6px" }} onClick={(e) => e.stopPropagation()}>
-          <VoteButtons
-            analysisId={item.id}
-            initialScore={item.voteScore}
-            initialUserVote={item.userVote}
-            loggedIn={!!loggedIn}
-          />
-          <span style={{ color: "#555", lineHeight: 1, fontSize: "14px" }}>·</span>
-          <Link
-            href={`/opportunity/${item.id}`}
-            className="text-xs transition-colors"
-            style={{ color: "#bbb" }}
-            onMouseEnter={e => (e.currentTarget.style.color = "#ddd")}
-            onMouseLeave={e => (e.currentTarget.style.color = "#bbb")}
-          >
-            {item.commentCount > 0 ? `${item.commentCount} Comment${item.commentCount !== 1 ? "s" : ""}` : "Comments"}
-          </Link>
+          </div>
         </div>
       </div>
     </div>
