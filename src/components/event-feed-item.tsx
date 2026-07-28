@@ -31,7 +31,7 @@ export function EventFeedRow({ item, loggedIn }: Props) {
           router.push(`/opportunity/${item.analysis!.id}#comments`);
         }
       }}
-      className={`rounded-xl px-4 py-4 transition-all mb-3 relative overflow-hidden ${isAnalyzed ? "cursor-pointer" : ""}`}
+      className={`rounded-xl px-4 py-4 transition-all mb-3 relative ${isAnalyzed ? "cursor-pointer" : ""}`}
       style={{ background: "var(--surface)", border: "1px solid var(--border)", cursor: isAnalyzed || !loggedIn ? "pointer" : "default" }}
       onMouseEnter={e => { if (isAnalyzed || !loggedIn) { e.currentTarget.style.borderColor = "var(--border-hover)"; e.currentTarget.style.background = "var(--surface-hover)"; } }}
       onMouseLeave={e => { if (isAnalyzed || !loggedIn) { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.background = "var(--surface)"; } }}
@@ -137,7 +137,7 @@ export function EventFeedRow({ item, loggedIn }: Props) {
       </div>
       </div>
       {!loggedIn && (
-        <div className="absolute inset-0 z-10 backdrop-blur-[8px]" style={{ background: "rgba(10, 10, 10, 0.4)" }} />
+        <div className="absolute inset-0 z-10 rounded-xl backdrop-blur-[8px]" style={{ background: "rgba(10, 10, 10, 0.4)" }} />
       )}
     </div>
   );
