@@ -70,13 +70,6 @@ export function OpportunityCard({ item, loggedIn }: Props) {
           <p className={`text-xs leading-relaxed line-clamp-2 ${!isPro ? "blur-[4px] select-none opacity-50" : ""}`} style={{ color: "var(--text-2)" }}>
             {item.bearThesis}
           </p>
-          {!isPro && (
-            <div className="absolute inset-0 flex items-center justify-center rounded-lg" style={{ background: "rgba(0,0,0,0.4)" }}>
-              <Link href="/pricing" onClick={e => e.stopPropagation()} className="text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-full transition-colors hover:bg-white/10" style={{ background: "rgba(244,63,94,0.2)", color: "#f43f5e", border: "1px solid rgba(244,63,94,0.3)" }}>
-                Unlock Analysis
-              </Link>
-            </div>
-          )}
         </div>
         <div className="flex items-center gap-2 mt-3 flex-wrap">
           <SignalBadge type={item.signalType} size="sm" />
