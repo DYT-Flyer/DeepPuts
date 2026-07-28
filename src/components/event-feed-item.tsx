@@ -17,6 +17,7 @@ interface Props {
 export function EventFeedRow({ item, loggedIn }: Props) {
   const router = useRouter();
   const isAnalyzed = !!item.analysis;
+  const displayTickers = item.analysis ? item.analysis.affectedTickers : item.tickers;
   
   return (
     <div
@@ -78,7 +79,7 @@ export function EventFeedRow({ item, loggedIn }: Props) {
       <div className="flex items-center gap-2 mt-3 flex-wrap">
         {item.analysis && <SignalBadge type={item.analysis.signalType} size="sm" />}
         <span className="text-xs capitalize" style={{ color: "#888" }}>{item.assetClass}</span>
-        {item.tickers.slice(0, 5).map((t) => (
+        {displayTickers.slice(0, 5).map((t) => (
           <span key={t} className="flex items-center gap-1.5">
             <span style={{ color: "#444" }}>·</span>
             <Link
@@ -93,10 +94,10 @@ export function EventFeedRow({ item, loggedIn }: Props) {
             </Link>
           </span>
         ))}
-        {item.tickers.length > 0 && (
+        {displayTickers.length > 0 && (
           <CardPerformance 
             opportunityId={item.analysis?.id} 
-            tickers={item.tickers}
+            tickers={displayTickers}
             pubDate={item.publishedAt}
             assetClass={item.assetClass}
           />
