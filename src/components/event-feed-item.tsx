@@ -24,12 +24,19 @@ export function EventFeedRow({ item, loggedIn }: Props) {
   
   return (
     <div
-      onClick={() => isAnalyzed ? router.push(`/opportunity/${item.analysis!.id}#comments`) : null}
-      className={`rounded-xl px-4 py-4 transition-all mb-3 ${isAnalyzed ? "cursor-pointer" : ""}`}
-      style={{ background: "var(--surface)", border: "1px solid var(--border)", cursor: isAnalyzed ? "pointer" : "default" }}
-      onMouseEnter={e => { if (isAnalyzed) { e.currentTarget.style.borderColor = "var(--border-hover)"; e.currentTarget.style.background = "var(--surface-hover)"; } }}
-      onMouseLeave={e => { if (isAnalyzed) { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.background = "var(--surface)"; } }}
+      onClick={() => {
+        if (!loggedIn) {
+          router.push("/login");
+        } else if (isAnalyzed) {
+          router.push(`/opportunity/${item.analysis!.id}#comments`);
+        }
+      }}
+      className={`rounded-xl px-4 py-4 transition-all mb-3 relative overflow-hidden ${isAnalyzed ? "cursor-pointer" : ""}`}
+      style={{ background: "var(--surface)", border: "1px solid var(--border)", cursor: isAnalyzed || !loggedIn ? "pointer" : "default" }}
+      onMouseEnter={e => { if (isAnalyzed || !loggedIn) { e.currentTarget.style.borderColor = "var(--border-hover)"; e.currentTarget.style.background = "var(--surface-hover)"; } }}
+      onMouseLeave={e => { if (isAnalyzed || !loggedIn) { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.background = "var(--surface)"; } }}
     >
+      <div className={`transition-all ${!loggedIn ? "blur-[6px] select-none opacity-40 pointer-events-none" : ""}`}>
       <div style={{ display: "flex", alignItems: "flex-start", gap: "10px", marginBottom: "4px" }}>
         {item.analysis ? (
           <ConvictionBadge score={item.analysis.convictionScore} size="sm" />
@@ -128,6 +135,14 @@ export function EventFeedRow({ item, loggedIn }: Props) {
           </>
         )}
       </div>
+      {!loggedIn && (
+        <div className="absolute inset-0 flex items-center justify-center z-10 bg-black/10">
+          <Link href="/login" onClick={e => e.stopPropagation()} className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest px-4 py-2 rounded-full transition-colors hover:bg-white/10" style={{ background: "var(--surface-2)", color: "var(--text-1)", border: "1px solid var(--border)" }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+            Sign in to view
+          </Link>
+        </div>
+      )}
     </div>
   );
 }
