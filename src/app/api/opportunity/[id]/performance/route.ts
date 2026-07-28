@@ -86,7 +86,7 @@ export async function GET(
   const missingPub = tickers.filter(t => snapshot[t] === undefined);
   if (missingPub.length > 0) {
     const prices = await Promise.all(
-      missingPub.map(t => fetchClose(toYahooSymbol(t), pubDate, addDays(pubDate, 7), "asc"))
+      missingPub.map(t => fetchClose(toYahooSymbol(t, analysis.canonicalEvent.assetClass as "stock" | "crypto"), pubDate, addDays(pubDate, 7), "asc"))
     );
     let updated = false;
     missingPub.forEach((t, i) => {
@@ -102,7 +102,7 @@ export async function GET(
   // Fetch all horizon prices in parallel per ticker
   const results: TickerPerformance[] = await Promise.all(
     tickers.map(async (ticker) => {
-      const sym = toYahooSymbol(ticker);
+      const sym = toYahooSymbol(ticker, analysis.canonicalEvent.assetClass as "stock" | "crypto");
       const pubPrice = snapshot[ticker] ?? null;
 
       // Fetch horizons in parallel — only meaningful if pub date is old enough

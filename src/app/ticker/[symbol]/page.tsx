@@ -22,12 +22,21 @@ export default function TickerPage({ params }: { params: Promise<{ symbol: strin
   useEffect(() => {
     async function load() {
       setLoading(true);
-      const [eventsRes, sparkRes] = await Promise.all([
-        fetch(`/api/ticker/${upper}`),
-        fetch(`/api/ticker/${upper}/sparkline`),
-      ]);
-      if (eventsRes.ok) { const d = await eventsRes.json(); setItems(d.items || []); }
-      if (sparkRes.ok) { const d = await sparkRes.json(); setSparkline(Array.isArray(d) ? d : []); }
+      const eventsRes = await fetch(`/api/ticker/${upper}`);
+      let assetClass = undefined;
+      if (eventsRes.ok) { 
+        const d = await eventsRes.json(); 
+        setItems(d.items || []); 
+        if (d.items && d.items.length > 0) {
+          assetClass = d.items[0].event?.assetClass;
+        }
+      }
+      
+      const sparkRes = await fetch(`/api/ticker/${upper}/sparkline${assetClass ? `?assetClass=${assetClass}` : ""}`);
+      if (sparkRes.ok) { 
+        const d = await sparkRes.json(); 
+        setSparkline(Array.isArray(d) ? d : []); 
+      }
       setLoading(false);
     }
     load();

@@ -21,11 +21,32 @@ function toDateStr(d: Date) {
   return d.toISOString().split("T")[0];
 }
 
-export function toYahooSymbol(ticker: string): string {
+export function toYahooSymbol(ticker: string, assetClass?: "stock" | "crypto"): string {
   // Mapping Crypto format (X:BTCUSD to BTC-USD)
   if (ticker.startsWith("X:")) {
     const withoutPrefix = ticker.replace("X:", "");
     return withoutPrefix.replace("USD", "-USD");
+  }
+  // Mapping AI output (BTC, ETH, SOL) to Yahoo Finance pairs (BTC-USD, ETH-USD)
+  const cryptoMap: Record<string, string> = {
+    BTC: "BTC-USD",
+    ETH: "ETH-USD",
+    SOL: "SOL-USD",
+    DOGE: "DOGE-USD",
+    XRP: "XRP-USD",
+    ADA: "ADA-USD",
+    AVAX: "AVAX-USD",
+    BNB: "BNB-USD",
+    LINK: "LINK-USD",
+    DOT: "DOT-USD",
+    MATIC: "MATIC-USD",
+    UNI: "UNI-USD",
+  };
+  if (cryptoMap[ticker]) {
+    return cryptoMap[ticker];
+  }
+  if (assetClass === "crypto" && !ticker.includes("-")) {
+    return `${ticker}-USD`;
   }
   return ticker;
 }
@@ -103,8 +124,8 @@ export async function fetchPriceAt(symbol: string, date: Date): Promise<number |
   }
 }
 
-export async function fetchSparkline(symbol: string): Promise<SparklinePoint[]> {
-  const yahooSymbol = toYahooSymbol(symbol);
+export async function fetchSparkline(symbol: string, assetClass?: "stock" | "crypto"): Promise<SparklinePoint[]> {
+  const yahooSymbol = toYahooSymbol(symbol, assetClass);
   const now = new Date();
   const from = new Date(now);
   from.setDate(from.getDate() - 7); // Default to last 7 days for a sparkline
