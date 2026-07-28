@@ -8,7 +8,7 @@ export async function GET() {
 
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
-    select: { id: true, role: true, acceptedTermsAt: true, onboardedAt: true },
+    select: { id: true, role: true, acceptedTermsAt: true, onboardedAt: true, tier: true },
   });
 
   if (!user) return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -18,5 +18,6 @@ export async function GET() {
     role: user.role,
     acceptedTermsAt: user.acceptedTermsAt?.toISOString() ?? null,
     onboardedAt: user.onboardedAt?.toISOString() ?? null,
+    tier: user.tier,
   });
 }

@@ -27,3 +27,9 @@ Unlike traditional stock screeners that focus on growth and bullish trends, Deep
 ## Disclaimer
 
 *DeepPuts provides AI-generated analysis for research and educational purposes only — not investment advice. Short selling and put options strategies carry significant risk of unlimited losses. Always conduct your own due diligence.*
+
+## Stripe Configuration
+To test Stripe, create an account, get test API keys and set:
+- `STRIPE_SECRET_KEY`
+- `STRIPE_PRICE_ID` (Subscription Price ID)
+- `STRIPE_WEBHOOK_SECRET`
