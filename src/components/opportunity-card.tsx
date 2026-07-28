@@ -39,7 +39,7 @@ export function OpportunityCard({ item, loggedIn, index }: Props) {
         }
       }}
       className="rounded-xl px-4 py-4 transition-all cursor-pointer relative"
-      style={{ background: "var(--surface)", border: "1px solid var(--border)", cursor: "pointer" }}
+      style={{ position: "relative", background: "var(--surface)", border: "1px solid var(--border)", cursor: "pointer" }}
       onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--border-hover)"; e.currentTarget.style.background = "var(--surface-hover)"; }}
       onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.background = "var(--surface)"; }}
     >
@@ -127,8 +127,14 @@ export function OpportunityCard({ item, loggedIn, index }: Props) {
       </div>
       {isLocked && (
         <div
-          className="absolute inset-0 z-10 rounded-xl backdrop-blur-[8px] flex flex-col items-center justify-center gap-2"
-          style={{ background: "rgba(10, 10, 10, 0.55)" }}
+          style={{
+            position: "absolute", inset: 0, zIndex: 20,
+            borderRadius: "12px",
+            backdropFilter: "blur(8px)",
+            WebkitBackdropFilter: "blur(8px)",
+            background: "rgba(10, 10, 10, 0.7)",
+            display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "8px",
+          }}
           onClick={e => e.stopPropagation()}
         >
           <Lock size={14} style={{ color: "var(--text-3)" }} />
@@ -137,7 +143,7 @@ export function OpportunityCard({ item, loggedIn, index }: Props) {
           </p>
           <Link
             href={loggedIn ? "/pricing" : "/login"}
-            className="text-xs px-3 py-1.5 rounded-lg font-medium transition-opacity hover:opacity-80"
+            className="text-xs px-3 py-1.5 rounded-lg font-medium"
             style={{ background: "#f43f5e", color: "#fff" }}
             onClick={e => e.stopPropagation()}
           >
