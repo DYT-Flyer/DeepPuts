@@ -31,6 +31,10 @@ export default function LoginPage() {
     setUsernameStatus("idle");
     if (usernameTimer.current) clearTimeout(usernameTimer.current);
     if (!value.trim()) return;
+    if (!/^[a-zA-Z0-9_]+$/.test(value.trim())) {
+      setUsernameStatus("taken");
+      return;
+    }
     setUsernameStatus("checking");
     usernameTimer.current = setTimeout(async () => {
       try {
@@ -247,7 +251,10 @@ export default function LoginPage() {
                   <label className="login-label">Username</label>
                   {usernameStatus === "checking" && <span style={{ fontSize: "0.7rem", color: "var(--text-3)" }}>Checking…</span>}
                   {usernameStatus === "available" && <span style={{ fontSize: "0.7rem", color: "#4ade80" }}>✓ Available</span>}
-                  {usernameStatus === "taken" && <span style={{ fontSize: "0.7rem", color: "#f87171" }}>✗ Already taken</span>}
+                  {usernameStatus === "taken" && name && !/^[a-zA-Z0-9_]+$/.test(name.trim())
+                    ? <span style={{ fontSize: "0.7rem", color: "#f87171" }}>✗ Letters, numbers, _ only</span>
+                    : usernameStatus === "taken" && <span style={{ fontSize: "0.7rem", color: "#f87171" }}>✗ Already taken</span>
+                  }
                 </div>
                 <input
                   type="text"
