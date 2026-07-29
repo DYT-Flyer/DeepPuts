@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
-import { TrendingDown } from "lucide-react";
 
 export function OnboardingModal() {
   const { data: session, status } = useSession();
@@ -37,16 +36,9 @@ export function OnboardingModal() {
         className="w-full max-w-md rounded-2xl p-6 shadow-2xl"
         style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
       >
-        {/* Header */}
-        <div className="flex items-center gap-3 mb-5">
-          <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-            style={{ background: "rgba(244,63,94,0.1)", border: "1px solid rgba(244,63,94,0.2)" }}>
-            <TrendingDown size={18} style={{ color: "#f43f5e" }} />
-          </div>
-          <div>
-            <h2 className="text-base font-bold" style={{ color: "var(--text)" }}>Welcome to DeepPuts</h2>
-            <p className="text-xs" style={{ color: "var(--text-3)" }}>AI-powered bearish market intelligence</p>
-          </div>
+        <div className="mb-5">
+          <h2 className="text-base font-bold mb-1" style={{ color: "var(--text)" }}>Welcome to DeepPuts</h2>
+          <p className="text-xs" style={{ color: "var(--text-3)" }}>AI-powered bearish market intelligence</p>
         </div>
 
         {/* Disclosure */}
@@ -64,14 +56,18 @@ export function OnboardingModal() {
         </div>
 
         {/* Single checkbox */}
-        <label className="flex items-start gap-3 cursor-pointer mb-5">
-          <div className="relative flex items-center justify-center mt-0.5 shrink-0 w-4 h-4 rounded border transition-all"
-            style={{ borderColor: checked ? "#f43f5e" : "var(--border)", background: checked ? "#f43f5e" : "transparent" }}>
+        <label style={{ display: "flex", alignItems: "flex-start", gap: "10px", cursor: "pointer", marginBottom: "20px" }}>
+          <div style={{
+            position: "relative", display: "flex", alignItems: "center", justifyContent: "center",
+            marginTop: "1px", flexShrink: 0, width: "16px", height: "16px",
+            borderRadius: "4px", border: `1px solid ${checked ? "#f43f5e" : "var(--border)"}`,
+            background: checked ? "#f43f5e" : "transparent", transition: "all 0.15s",
+          }}>
             <input
               type="checkbox"
               checked={checked}
               onChange={e => setChecked(e.target.checked)}
-              className="absolute opacity-0 w-full h-full cursor-pointer"
+              style={{ position: "absolute", opacity: 0, width: "100%", height: "100%", cursor: "pointer", margin: 0 }}
             />
             {checked && (
               <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
@@ -79,23 +75,27 @@ export function OnboardingModal() {
               </svg>
             )}
           </div>
-          <span className="text-xs leading-relaxed" style={{ color: "var(--text-2)" }}>
+          <span style={{ fontSize: "0.75rem", lineHeight: "1.5", color: "var(--text-2)" }}>
             I understand DeepPuts is a research tool, not financial advice, and I accept the{" "}
-            <a href="/tos" target="_blank" rel="noopener noreferrer" style={{ color: "var(--text)", textDecoration: "underline" }} onClick={e => e.stopPropagation()}>Terms of Service</a>
+            <a href="/tos" target="_blank" rel="noopener noreferrer"
+              style={{ color: "var(--text)", textDecoration: "underline" }}
+              onClick={e => e.stopPropagation()}>Terms of Service</a>
             {" "}and{" "}
-            <a href="/privacy" target="_blank" rel="noopener noreferrer" style={{ color: "var(--text)", textDecoration: "underline" }} onClick={e => e.stopPropagation()}>Privacy Policy</a>.
+            <a href="/privacy" target="_blank" rel="noopener noreferrer"
+              style={{ color: "var(--text)", textDecoration: "underline" }}
+              onClick={e => e.stopPropagation()}>Privacy Policy</a>.
           </span>
         </label>
 
         <button
           onClick={accept}
           disabled={!checked || accepting}
-          className="w-full py-2.5 text-sm font-semibold rounded-xl transition-all"
           style={{
+            width: "100%", padding: "10px", fontSize: "0.875rem", fontWeight: 600,
+            borderRadius: "12px", border: "none", cursor: checked && !accepting ? "pointer" : "not-allowed",
             background: checked && !accepting ? "linear-gradient(135deg, #f43f5e, #e11d48)" : "var(--surface-2)",
             color: checked && !accepting ? "#fff" : "var(--text-3)",
-            cursor: checked && !accepting ? "pointer" : "not-allowed",
-            border: "1px solid transparent",
+            transition: "filter 0.15s",
           }}
           onMouseEnter={e => { if (checked && !accepting) e.currentTarget.style.filter = "brightness(1.1)"; }}
           onMouseLeave={e => { if (checked && !accepting) e.currentTarget.style.filter = ""; }}
