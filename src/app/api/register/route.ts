@@ -9,10 +9,12 @@ export async function POST(req: NextRequest) {
   if (!parsed.ok) return parsed.response;
   const { email, password, name } = parsed.data;
 
-  const existing = await prisma.user.findUnique({ where: { email } });
-  if (existing) {
-    return NextResponse.json({ error: "An account with this email already exists" }, { status: 409 });
-  }
+  const [existingEmail, existingName] = await Promise.all([
+    prisma.user.findUnique({ where: { email }, select: { id: true } }),
+    name ? prisma.user.findUnique({ where: { name }, select: { id: true } }) : null,
+  ]);
+  if (existingEmail) return NextResponse.json({ error: "An account with this email already exists" }, { status: 409 });
+  if (existingName) return NextResponse.json({ error: "That username is already taken" }, { status: 409 });
 
   const passwordHash = await bcrypt.hash(password, 12);
   const user = await prisma.user.create({

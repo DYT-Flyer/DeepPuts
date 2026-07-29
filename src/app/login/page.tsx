@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { TrendingDown, X, CheckCircle, Zap } from "lucide-react";
@@ -18,11 +18,30 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState<"form" | "plan">("form");
   const [planLoading, setPlanLoading] = useState(false);
+  const [usernameStatus, setUsernameStatus] = useState<"idle" | "checking" | "available" | "taken">("idle");
+  const usernameTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const router = useRouter();
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  function handleNameChange(value: string) {
+    setName(value);
+    setUsernameStatus("idle");
+    if (usernameTimer.current) clearTimeout(usernameTimer.current);
+    if (!value.trim()) return;
+    setUsernameStatus("checking");
+    usernameTimer.current = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/check-username?name=${encodeURIComponent(value.trim())}`);
+        const data = await res.json();
+        setUsernameStatus(data.available ? "available" : "taken");
+      } catch {
+        setUsernameStatus("idle");
+      }
+    }, 400);
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -211,7 +230,7 @@ export default function LoginPage() {
             <button
               key={m}
               type="button"
-              onClick={() => { setMode(m); setError(""); }}
+              onClick={() => { setMode(m); setError(""); setUsernameStatus("idle"); }}
               className={`login-tab ${mode === m ? "login-tab-active" : "login-tab-inactive"}`}
             >
               {m === "login" ? "Sign In" : "Sign Up"}
@@ -224,14 +243,20 @@ export default function LoginPage() {
           <div className="login-form-box">
             {mode === "signup" && (
               <div className="login-form-group">
-                <label className="login-label">Username</label>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <label className="login-label">Username</label>
+                  {usernameStatus === "checking" && <span style={{ fontSize: "0.7rem", color: "var(--text-3)" }}>Checking…</span>}
+                  {usernameStatus === "available" && <span style={{ fontSize: "0.7rem", color: "#4ade80" }}>✓ Available</span>}
+                  {usernameStatus === "taken" && <span style={{ fontSize: "0.7rem", color: "#f87171" }}>✗ Already taken</span>}
+                </div>
                 <input
                   type="text"
                   value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  onChange={(e) => handleNameChange(e.target.value)}
                   placeholder="Choose a username"
                   required={mode === "signup"}
                   className="login-input"
+                  style={usernameStatus === "taken" ? { borderColor: "rgba(248,113,113,0.5)" } : usernameStatus === "available" ? { borderColor: "rgba(74,222,128,0.4)" } : {}}
                 />
               </div>
             )}
