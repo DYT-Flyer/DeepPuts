@@ -24,6 +24,10 @@ model User {
   stripeCustomerId     String?   @unique
   stripeSubscriptionId String?   @unique
 
+  // Password reset
+  passwordResetToken   String?   @unique
+  passwordResetExpires DateTime?
+
   sessions       Session[]
   comments       Comment[]
   votes          Vote[]

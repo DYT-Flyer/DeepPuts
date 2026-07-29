@@ -249,7 +249,16 @@ export default function LoginPage() {
             </div>
 
             <div className="login-form-group">
-              <label className="login-label">Password</label>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <label className="login-label">Password</label>
+                {mode === "login" && (
+                  <Link href="/forgot-password" style={{ fontSize: "0.7rem", color: "var(--text-3)", textDecoration: "none" }}
+                    onMouseEnter={e => (e.currentTarget.style.color = "#f43f5e")}
+                    onMouseLeave={e => (e.currentTarget.style.color = "var(--text-3)")}>
+                    Forgot password?
+                  </Link>
+                )}
+              </div>
               <input
                 type="password"
                 value={password}

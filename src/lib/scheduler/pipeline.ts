@@ -292,6 +292,15 @@ export async function runRefreshCycle(db: PrismaClient = prisma): Promise<void> 
     });
 
     console.log(`[scheduler] Cycle complete: ${eventsFound} found, ${eventsAnalyzed} analyzed, status: ${status}`);
+
+    // Fire-and-forget: send high-conviction email alerts
+    if (eventsAnalyzed > 0 && process.env.CRON_SECRET) {
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+      fetch(`${appUrl}/api/alerts`, {
+        method: "POST",
+        headers: { "x-cron-secret": process.env.CRON_SECRET },
+      }).catch(err => console.error("[scheduler] Alert dispatch failed:", err));
+    }
   } catch (err) {
     console.error("[scheduler] Fatal error:", err);
     await db.schedulerRun.update({
