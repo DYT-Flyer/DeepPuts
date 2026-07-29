@@ -139,7 +139,7 @@ export default function LoginPage() {
                   <p style={{ color: "#fff", fontWeight: 700, fontSize: "1rem", margin: 0, display: "flex", alignItems: "center", gap: "6px" }}>
                     Pro <Zap size={13} style={{ color: "#f43f5e" }} />
                   </p>
-                  <p style={{ color: "#f43f5e", fontSize: "0.75rem", margin: "2px 0 0", fontWeight: 600 }}>$19 / month</p>
+                  <p style={{ color: "#f43f5e", fontSize: "0.75rem", margin: "2px 0 0", fontWeight: 600 }}>$19.99 / month</p>
                 </div>
               </div>
               <ul style={{ listStyle: "none", margin: "0 0 16px", padding: 0, display: "flex", flexDirection: "column", gap: "6px" }}>

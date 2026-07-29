@@ -65,7 +65,7 @@ export default function PricingPage() {
         <div className="rounded-2xl p-8 relative overflow-hidden shadow-2xl transform md:-translate-y-4" style={{ background: "rgba(244,63,94,0.05)", border: "1px solid rgba(244,63,94,0.4)", backdropFilter: "blur(12px)" }}>
           <div className="absolute top-0 right-0 px-3 py-1 rounded-bl-xl text-xs font-bold" style={{ background: "#f43f5e", color: "#fff" }}>RECOMMENDED</div>
           <h2 className="text-2xl font-bold mb-2 text-white">Pro</h2>
-          <p className="text-4xl font-extrabold mb-6" style={{ color: "#f43f5e" }}>$19<span className="text-sm font-medium" style={{ color: "var(--text-3)" }}>/month</span></p>
+          <p className="text-4xl font-extrabold mb-6" style={{ color: "#f43f5e" }}>$19.99<span className="text-sm font-medium" style={{ color: "var(--text-3)" }}>/month</span></p>
           
           <ul className="space-y-4 mb-8">
             {["Unlimited AI bear thesis analysis", "Real-time price tracking & horizons", "Instant email alerts for high-conviction signals", "View exact catalyst dates & time horizons", "Priority support"].map((feature, i) => (
