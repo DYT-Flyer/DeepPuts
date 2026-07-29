@@ -30,7 +30,6 @@ export async function POST() {
           quantity: 1,
         },
       ],
-      automatic_tax: { enabled: false },
       success_url: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/?success=true`,
       cancel_url: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/pricing?canceled=true`,
       client_reference_id: userId,
