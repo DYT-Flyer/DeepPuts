@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowUpRight, MessageSquare, Trash2, Bell } from "lucide-react";
+import { ArrowUpRight, MessageSquare, Trash2, Bell, CreditCard, ExternalLink, Zap } from "lucide-react";
 import { Nav } from "@/components/nav";
 import { ConvictionBadge } from "@/components/conviction-badge";
 
@@ -40,6 +40,8 @@ export default function ProfilePage() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [notifPrefs, setNotifPrefs] = useState<NotifPrefs | null>(null);
   const [savingPrefs, setSavingPrefs] = useState(false);
+  const [portalLoading, setPortalLoading] = useState(false);
+  const isPro = (session?.user as any)?.tier === "PRO";
 
   useEffect(() => {
     if (!session) { router.push("/login"); return; }
@@ -77,6 +79,23 @@ export default function ProfilePage() {
       body: JSON.stringify({ [key]: value }),
     });
     setSavingPrefs(false);
+  }
+
+  async function handleManageSubscription() {
+    setPortalLoading(true);
+    try {
+      const res = await fetch("/api/stripe/portal", { method: "POST" });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        alert(data.error || "Failed to open billing portal");
+        setPortalLoading(false);
+      }
+    } catch {
+      alert("Error opening billing portal");
+      setPortalLoading(false);
+    }
   }
 
   async function deleteComment(id: string) {
@@ -196,6 +215,56 @@ export default function ProfilePage() {
               <div className="px-5 py-4">
                 <p className="text-xs mb-1" style={{ color: "var(--text-3)" }}>Member since</p>
                 <p className="text-sm" style={{ color: "var(--text)" }}>{formatDate(profile.createdAt)}</p>
+              </div>
+            </div>
+
+            {/* Subscription */}
+            <div>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "16px" }}>
+                <CreditCard size={13} style={{ color: "var(--text-3)" }} />
+                <h2 className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--text-3)" }}>Subscription</h2>
+              </div>
+              <div className="rounded-xl px-5 py-4 flex items-center justify-between"
+                style={{ background: "var(--surface)", border: `1px solid ${isPro ? "rgba(244,63,94,0.3)" : "var(--border)"}` }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                  {isPro ? (
+                    <>
+                      <Zap size={14} style={{ color: "#f43f5e" }} />
+                      <div>
+                        <p className="text-sm font-semibold" style={{ color: "#fff" }}>DeepPuts Pro</p>
+                        <p className="text-xs mt-0.5" style={{ color: "var(--text-3)" }}>$19.99 / month · Full access</p>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <CreditCard size={14} style={{ color: "var(--text-3)" }} />
+                      <div>
+                        <p className="text-sm font-semibold" style={{ color: "var(--text)" }}>Free Plan</p>
+                        <p className="text-xs mt-0.5" style={{ color: "var(--text-3)" }}>Limited to 3 cards per page</p>
+                      </div>
+                    </>
+                  )}
+                </div>
+                {isPro ? (
+                  <button
+                    onClick={handleManageSubscription}
+                    disabled={portalLoading}
+                    className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg transition-all"
+                    style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--text-2)", cursor: portalLoading ? "not-allowed" : "pointer" }}
+                    onMouseEnter={e => { if (!portalLoading) { e.currentTarget.style.borderColor = "var(--border-hover)"; e.currentTarget.style.color = "var(--text)"; }}}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.color = "var(--text-2)"; }}
+                  >
+                    <ExternalLink size={11} />
+                    {portalLoading ? "Redirecting…" : "Manage"}
+                  </button>
+                ) : (
+                  <Link href="/pricing"
+                    className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg font-medium"
+                    style={{ background: "#f43f5e", color: "#fff" }}
+                  >
+                    <Zap size={11} /> Upgrade
+                  </Link>
+                )}
               </div>
             </div>
 
