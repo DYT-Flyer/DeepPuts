@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { TrendingDown } from "lucide-react";
@@ -74,9 +74,13 @@ function ResetPasswordForm({ token }: { token: string }) {
 }
 
 function TokenReader() {
-  const token = typeof window !== "undefined"
-    ? new URLSearchParams(window.location.search).get("token") || ""
-    : "";
+  const [token, setToken] = useState<string | null>(null);
+
+  useEffect(() => {
+    setToken(new URLSearchParams(window.location.search).get("token") || "");
+  }, []);
+
+  if (token === null) return null;
   return <ResetPasswordForm token={token} />;
 }
 
