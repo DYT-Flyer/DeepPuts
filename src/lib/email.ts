@@ -5,6 +5,8 @@ function getTransporter() {
     host: "smtp.zoho.com",
     port: 465,
     secure: true,
+    connectionTimeout: 10000,
+    greetingTimeout: 10000,
     auth: {
       user: process.env.SMTP_USER,
       pass: process.env.SMTP_PASS,

@@ -20,7 +20,12 @@ export async function POST(req: NextRequest) {
     data: { passwordResetToken: token, passwordResetExpires: expires },
   });
 
-  await sendPasswordResetEmail(email, token);
+  try {
+    await sendPasswordResetEmail(email, token);
+  } catch (err) {
+    console.error("Failed to send password reset email:", err);
+    // Still return success — token is saved, user can retry
+  }
 
   return NextResponse.json({ success: true });
 }
