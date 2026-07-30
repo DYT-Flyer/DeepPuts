@@ -8,9 +8,13 @@ export async function POST(req: NextRequest) {
   if (password.length < 8) return NextResponse.json({ error: "Password must be at least 8 characters" }, { status: 400 });
 
   const user = await prisma.user.findUnique({ where: { passwordResetToken: token } });
+  console.log("[reset-password] token:", token.slice(0, 8), "user found:", !!user, "expires:", user?.passwordResetExpires);
 
-  if (!user || !user.passwordResetExpires || user.passwordResetExpires < new Date()) {
-    return NextResponse.json({ error: "Invalid or expired reset link" }, { status: 400 });
+  if (!user) {
+    return NextResponse.json({ error: "Token not found — request a new reset link" }, { status: 400 });
+  }
+  if (!user.passwordResetExpires || user.passwordResetExpires < new Date()) {
+    return NextResponse.json({ error: "Reset link expired — request a new one" }, { status: 400 });
   }
 
   const passwordHash = await bcrypt.hash(password, 12);

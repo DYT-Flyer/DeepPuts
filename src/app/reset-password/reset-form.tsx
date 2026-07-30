@@ -16,7 +16,8 @@ export function ResetForm({ token }: { token: string }) {
   if (!token) {
     return (
       <div style={{ textAlign: "center" }}>
-        <p style={{ color: "#f87171", marginBottom: "16px", fontSize: "0.875rem" }}>Invalid reset link.</p>
+        <p style={{ color: "#f87171", marginBottom: "8px", fontSize: "0.875rem" }}>No token found in URL.</p>
+        <p style={{ color: "var(--text-3)", marginBottom: "16px", fontSize: "0.75rem" }}>The link may have been modified or expired.</p>
         <Link href="/forgot-password" style={{ color: "#f43f5e", fontSize: "0.875rem", textDecoration: "none" }}>Request a new one →</Link>
       </div>
     );
