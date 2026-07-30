@@ -1,16 +1,23 @@
-import { Resend } from "resend";
+import nodemailer from "nodemailer";
 
-let _resend: Resend | null = null;
-function getResend() {
-  if (!_resend) _resend = new Resend(process.env.RESEND_API_KEY);
-  return _resend;
+function getTransporter() {
+  return nodemailer.createTransport({
+    host: "smtp.zoho.com",
+    port: 465,
+    secure: true,
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS,
+    },
+  });
 }
-const FROM = "DeepPuts <noreply@deepputs.com>";
+
+const FROM = `"DeepPuts" <${process.env.SMTP_USER || "support@deepputs.com"}>`;
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://deepputs.com";
 
 export async function sendPasswordResetEmail(email: string, token: string) {
   const url = `${APP_URL}/reset-password?token=${token}`;
-  await getResend().emails.send({
+  await getTransporter().sendMail({
     from: FROM,
     to: email,
     subject: "Reset your DeepPuts password",
@@ -46,7 +53,7 @@ export async function sendHighConvictionAlert(email: string, analyses: AlertAnal
     </tr>
   `).join("");
 
-  await getResend().emails.send({
+  await getTransporter().sendMail({
     from: FROM,
     to: email,
     subject: `${analyses.length} new high-conviction signal${analyses.length > 1 ? "s" : ""} on DeepPuts`,
