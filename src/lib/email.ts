@@ -2,9 +2,10 @@ import nodemailer from "nodemailer";
 
 function getTransporter() {
   return nodemailer.createTransport({
-    host: "smtp.zoho.com",
-    port: 465,
-    secure: true,
+    host: "smtppro.zoho.com",
+    port: 587,
+    secure: false,
+    requireTLS: true,
     connectionTimeout: 10000,
     greetingTimeout: 10000,
     auth: {
