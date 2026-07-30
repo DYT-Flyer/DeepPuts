@@ -17,7 +17,7 @@ async function sendEmail(to: string, subject: string, html: string) {
 }
 
 export async function sendPasswordResetEmail(email: string, token: string) {
-  const url = `${APP_URL}/reset-password?token=${token}`;
+  const url = `${APP_URL}/reset-password/${token}`;
   await sendEmail(email, "Reset your DeepPuts password", `
     <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px 24px;background:#0a0a0a;color:#e5e7eb;border-radius:12px;">
       <h2 style="color:#fff;margin:0 0 8px;">Reset your password</h2>
