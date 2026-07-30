@@ -1,5 +1,5 @@
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://deepputs.com";
-const FROM = "DeepPuts <onboarding@resend.dev>"; // update to your verified domain once set up in Resend
+const FROM = "DeepPuts <support@deepputs.com>";
 
 async function sendEmail(to: string, subject: string, html: string) {
   const res = await fetch("https://api.resend.com/emails", {
