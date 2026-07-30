@@ -2,15 +2,12 @@
 
 import { useState, Suspense } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { TrendingDown } from "lucide-react";
 import "../login/login.css";
 
-function ResetPasswordForm() {
+function ResetPasswordForm({ token }: { token: string }) {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const token = searchParams.get("token") || "";
-
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [loading, setLoading] = useState(false);
@@ -76,6 +73,13 @@ function ResetPasswordForm() {
   );
 }
 
+function TokenReader() {
+  const token = typeof window !== "undefined"
+    ? new URLSearchParams(window.location.search).get("token") || ""
+    : "";
+  return <ResetPasswordForm token={token} />;
+}
+
 export default function ResetPasswordPage() {
   return (
     <div className="login-container">
@@ -90,8 +94,8 @@ export default function ResetPasswordPage() {
           </Link>
           <p className="login-subtitle">Set a new password</p>
         </div>
-        <Suspense>
-          <ResetPasswordForm />
+        <Suspense fallback={null}>
+          <TokenReader />
         </Suspense>
         <div className="login-footer">
           <p className="login-footer-disclaimer">Not financial advice. For informational purposes only.</p>
