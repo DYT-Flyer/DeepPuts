@@ -1,3 +1,27 @@
+function decodeHtmlEntities(str: string): string {
+  return str
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&yen;/g, "¥")
+    .replace(/&euro;/g, "€")
+    .replace(/&pound;/g, "£")
+    .replace(/&copy;/g, "©")
+    .replace(/&reg;/g, "®")
+    .replace(/&trade;/g, "™")
+    .replace(/&mdash;/g, "—")
+    .replace(/&ndash;/g, "–")
+    .replace(/&lsquo;/g, "'")
+    .replace(/&rsquo;/g, "'")
+    .replace(/&ldquo;/g, '"')
+    .replace(/&rdquo;/g, '"')
+    .replace(/&#(\d+);/g, (_, dec) => String.fromCodePoint(Number(dec)))
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, hex) => String.fromCodePoint(parseInt(hex, 16)));
+}
+
 export interface RssArticle {
   id: string;
   title: string;
@@ -29,7 +53,7 @@ export async function fetchRssFeeds(feeds: string[], providerPrefix: string): Pr
       for (const match of items) {
         const itemText = match[1];
 
-        const titleMatch = itemText.match(/<title>([^<]+)<\/title>/i);
+        const titleMatch = itemText.match(/<title><!\[CDATA\[([\s\S]*?)\]\]><\/title>/i) || itemText.match(/<title>([^<]+)<\/title>/i);
         const linkMatch = itemText.match(/<link>([^<]+)<\/link>/i);
         
         // CDATA wrapping in description or normal
@@ -58,8 +82,8 @@ export async function fetchRssFeeds(feeds: string[], providerPrefix: string): Pr
 
         articles.push({
           id: `${providerPrefix}-${guid}`,
-          title: title.replace(/&apos;/g, "'").replace(/&quot;/g, '"').replace(/&amp;/g, '&'),
-          summary: summary.replace(/&apos;/g, "'").replace(/&quot;/g, '"').replace(/&amp;/g, '&').replace(/<[^>]+>/g, ''), // Strip HTML
+          title: decodeHtmlEntities(title),
+          summary: decodeHtmlEntities(summary.replace(/<[^>]+>/g, "")),
           link,
           publishedAt,
         });
